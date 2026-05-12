@@ -3,7 +3,7 @@
 // Agent 1 (Full-Stack) + Agent 3 (UI/UX) — Main Dashboard View
 // ============================================================
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
 import { format, subDays, parseISO } from 'date-fns';
 import {
@@ -15,81 +15,6 @@ import {
   Heart, Moon, Zap, Flower2
 } from 'lucide-react';
 import { getLifeStageInfo } from '../../data/lifeStages';
-import BloomLetter from './BloomLetter';
-
-function checkApproachingTransition(
-  age: number,
-  lifeStage: string
-): { approaching: boolean; nextStage: string; message: string } | null {
-  if (lifeStage === 'puberty' && age >= 16) {
-    return {
-      approaching: true,
-      nextStage: 'reproductive',
-      message: "You're moving into your reproductive years — cycles typically become more regular now.",
-    };
-  }
-
-  if (lifeStage === 'reproductive' && age >= 37) {
-    return {
-      approaching: true,
-      nextStage: 'perimenopause',
-      message: 'Perimenopause can begin earlier than most expect — around 35-45 is common.',
-    };
-  }
-
-  if (lifeStage === 'perimenopause' && age >= 50) {
-    return {
-      approaching: true,
-      nextStage: 'menopause',
-      message: 'Menopause is defined as 12 months without a period — many women reach this in their early 50s.',
-    };
-  }
-
-  return null;
-}
-
-function StageTransitionBanner({
-  age,
-  lifeStage,
-  onLearn,
-}: {
-  age: number;
-  lifeStage: string;
-  onLearn: () => void;
-}) {
-  const transition = checkApproachingTransition(age, lifeStage);
-  const storageKey = transition ? `bloom_transition_dismissed_${transition.nextStage}` : '';
-  const [dismissed, setDismissed] = useState(() => Boolean(storageKey && localStorage.getItem(storageKey)));
-
-  if (!transition || dismissed) return null;
-
-  const dismiss = () => {
-    localStorage.setItem(storageKey, 'true');
-    setDismissed(true);
-  };
-
-  return (
-    <div className="glass-card p-4 border-l-4 border-l-amber-400">
-      <div className="flex items-start gap-3">
-        <span className="text-xl mt-0.5">🌸</span>
-        <div className="flex-1">
-          <p className="text-sm text-warm-600">{transition.message}</p>
-          <button className="text-sm text-bloom-500 font-medium mt-2" onClick={onLearn}>
-            Learn what's coming →
-          </button>
-        </div>
-        <button
-          type="button"
-          aria-label="Dismiss transition insight"
-          className="text-warm-400 text-lg leading-none"
-          onClick={dismiss}
-        >
-          ×
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default function Dashboard() {
   const { currentUser, symptomLogs, patterns, setCurrentView, markPatternRead } = useBloomStore();
@@ -184,14 +109,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {currentUser && (
-        <StageTransitionBanner
-          age={currentUser.age}
-          lifeStage={currentUser.lifeStage}
-          onLearn={() => setCurrentView('timeline')}
-        />
-      )}
-
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map(s => {
@@ -207,8 +124,6 @@ export default function Dashboard() {
           );
         })}
       </div>
-
-      <BloomLetter />
 
       {/* Pattern Alerts */}
       {unreadAlerts.length > 0 && (
@@ -252,13 +167,6 @@ export default function Dashboard() {
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Activity size={16} className="text-bloom-500" /> Symptom Trend (30 Days)
           </h3>
-          <p className="text-xs text-warm-400 mb-3">
-            This compares daily average symptom severity with energy. Purple uses a 0-5 symptom scale; green uses a 0-10 energy scale.
-          </p>
-          <div className="flex flex-wrap gap-3 mb-3 text-xs">
-            <span className="flex items-center gap-1 text-warm-500"><span className="w-3 h-3 rounded-full bg-bloom-400" /> Avg symptom severity</span>
-            <span className="flex items-center gap-1 text-warm-500"><span className="w-3 h-3 rounded-full bg-sage-400" /> Energy level</span>
-          </div>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={severityOverTime}>
@@ -273,13 +181,12 @@ export default function Dashboard() {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} interval={4} />
-                <YAxis yAxisId="severity" domain={[0, 5]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="energy" orientation="right" domain={[0, 10]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                <YAxis domain={[0, 5]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.1)', fontSize: 12 }}
                 />
-                <Area yAxisId="severity" type="monotone" dataKey="severity" stroke="#a855f7" fill="url(#sevGrad)" strokeWidth={2} name="Avg severity (0-5)" />
-                <Area yAxisId="energy" type="monotone" dataKey="energy" stroke="#22c55e" fill="url(#energyGrad)" strokeWidth={2} name="Energy (0-10)" />
+                <Area type="monotone" dataKey="severity" stroke="#a855f7" fill="url(#sevGrad)" strokeWidth={2} name="Avg Severity" />
+                <Area type="monotone" dataKey="energy" stroke="#22c55e" fill="url(#energyGrad)" strokeWidth={2} name="Energy" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -290,21 +197,6 @@ export default function Dashboard() {
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <TrendingUp size={16} className="text-rose-400" /> Symptom Categories
           </h3>
-          <p className="text-xs text-warm-400 mb-3">
-            This radar groups your logged symptoms by type and shows average severity in each category on a 0-5 scale.
-          </p>
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            {radarData
-              .filter(item => item.value > 0)
-              .sort((a, b) => b.value - a.value)
-              .slice(0, 4)
-              .map(item => (
-                <div key={item.category} className="rounded-lg bg-warm-50 px-3 py-2">
-                  <p className="text-[11px] text-warm-400">{item.category}</p>
-                  <p className="text-sm font-semibold">{item.value}/5 avg severity</p>
-                </div>
-              ))}
-          </div>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>

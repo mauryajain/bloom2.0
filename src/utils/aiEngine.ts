@@ -3,11 +3,9 @@
 // Real Edge Function call + fixed emergency keyword list
 // ============================================================
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { SymptomLog, PatternAlert, AskBloomMessage, UserProfile } from '../types';
+import { SymptomLog, PatternAlert, AskBloomMessage } from '../types';
 import { conditionLibrary } from '../data/conditions';
 import { supabase } from '../lib/supabase';
-import { buildSystemPrompt } from '../lib/buildSystemPrompt';
 
 // ---- Emergency Detection (expanded keyword list) ----
 const EMERGENCY_KEYWORDS = [
@@ -31,45 +29,9 @@ export function checkEmergencySymptoms(symptoms: string[]): { isEmergency: boole
   };
 }
 
-// ---- Real AI call ----
-export async function askBloomAI(userMessage: string, profile?: UserProfile | null): Promise<AskBloomMessage> {
+// ---- Real AI call via Supabase Edge Function ----
+export async function askBloomAI(userMessage: string): Promise<AskBloomMessage> {
   try {
-    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-    const emergencyCheck = checkEmergencySymptoms([userMessage]);
-    if (emergencyCheck) {
-      return {
-        id: `bloom-${Date.now()}`,
-        role: 'assistant',
-        content: emergencyCheck.message,
-        timestamp: new Date().toISOString(),
-        isEmergency: true,
-      };
-    }
-
-    if (geminiKey) {
-      const systemInstruction = profile
-        ? buildSystemPrompt(profile)
-        : 'You are Bloom, a women\'s health AI companion. Never diagnose. Always recommend consulting a healthcare professional.';
-
-      const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
-        systemInstruction,
-      });
-
-      const result = await model.generateContent(userMessage);
-
-      return {
-        id: `bloom-${Date.now()}`,
-        role: 'assistant',
-        content: result.response.text(),
-        timestamp: new Date().toISOString(),
-        isEmergency: false,
-        disclaimer: 'This is not medical advice or diagnosis. Always consult a healthcare professional.',
-      };
-    }
-
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
 

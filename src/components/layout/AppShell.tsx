@@ -9,25 +9,20 @@ import SymptomJournal from '../symptoms/SymptomJournal';
 import AskBloom from '../ai/AskBloom';
 import DoctorPrep from '../ai/DoctorPrep';
 import ConditionLibrary from '../conditions/ConditionLibrary';
-import NormalVsNot from '../conditions/NormalVsNot';
 import SettingsPage from '../settings/SettingsPage';
-import LifeTimeline from '../timeline/LifeTimeline';
-import StageEntryGuide from '../onboarding/StageEntryGuide';
 import { useBloomStore } from '../../store/useBloomStore';
 
 const views: Record<string, React.FC> = {
   dashboard: Dashboard,
-  timeline: LifeTimeline,
   journal: SymptomJournal,
   'ask-bloom': AskBloom,
   'doctor-prep': DoctorPrep,
   conditions: ConditionLibrary,
-  'normal-vs-not': NormalVsNot,
   settings: SettingsPage,
 };
 
 export default function AppShell() {
-  const { currentView, showStageGuide } = useBloomStore();
+  const { currentView } = useBloomStore();
   const ViewComponent = views[currentView] || Dashboard;
 
   return (
@@ -38,7 +33,6 @@ export default function AppShell() {
           <ViewComponent />
         </div>
       </main>
-      {showStageGuide && <StageEntryGuide />}
     </div>
   );
 }
