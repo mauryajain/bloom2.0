@@ -74,7 +74,10 @@ export default function Sidebar() {
         {currentUser && (
           <div className="mx-4 mb-4 p-3 rounded-xl bg-bloom-50/80 border border-bloom-100">
             <p className="font-semibold text-sm text-warm-800">{currentUser.name}</p>
-            <p className="text-xs text-warm-400 capitalize">{currentUser.lifeStage.replace('-', ' ')} · Age {currentUser.age}</p>
+            <p className="text-xs text-warm-400 capitalize">
+              {currentUser.lifeStage ? currentUser.lifeStage.replace('-', ' ') : 'Member'}
+              {currentUser.age ? ` · Age ${currentUser.age}` : ''}
+            </p>
           </div>
         )}
 

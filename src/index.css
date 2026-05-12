@@ -409,6 +409,409 @@ h1, h2, h3, h4, h5, h6 {
   animation: shimmer 1.5s infinite;
 }
 
+/* ============================================================
+   QUESTIONNAIRE — Multi-step onboarding styles
+   ============================================================ */
+
+.questionnaire-overlay {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #faf5ff 0%, #fdf2f8 30%, #fff7ed 60%, #faf5ff 100%);
+}
+
+.questionnaire-container {
+  width: 100%;
+  max-width: 640px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  box-shadow: 0 12px 48px rgba(168, 85, 247, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  padding: 32px;
+  position: relative;
+  animation: bloom 0.5s ease-out;
+}
+
+.q-skip-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(168, 85, 247, 0.08);
+  color: var(--color-warm-400);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.q-skip-btn:hover {
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--color-bloom-600);
+}
+
+.q-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.q-bloom-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  animation: float 6s ease-in-out infinite;
+}
+
+.q-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.q-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-warm-400);
+  margin-top: 4px;
+}
+
+/* Progress Bar */
+.q-progress-container {
+  width: 100%;
+  height: 4px;
+  background: var(--color-warm-100);
+  border-radius: 100px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.q-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #ec4899);
+  border-radius: 100px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Step dots */
+.q-steps {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.q-step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-warm-200);
+  color: var(--color-warm-400);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.q-step-dot.active {
+  border-color: var(--color-bloom-500);
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: white;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+  transform: scale(1.1);
+}
+
+.q-step-dot.done {
+  border-color: var(--color-sage-400);
+  background: var(--color-sage-100);
+  color: var(--color-sage-500);
+}
+
+/* Content area */
+.q-content {
+  animation: slide-up 0.35s ease-out;
+  min-height: 320px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.q-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.q-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-warm-700);
+  margin-bottom: 8px;
+}
+
+.q-optional {
+  font-weight: 400;
+  color: var(--color-warm-400);
+}
+
+.q-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 500px) {
+  .q-field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Chip buttons */
+.q-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.q-chip {
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 2px solid var(--color-warm-200);
+  background: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-warm-600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-body);
+}
+
+.q-chip:hover {
+  border-color: var(--color-bloom-300);
+  background: var(--color-bloom-50);
+}
+
+.q-chip.selected {
+  border-color: var(--color-bloom-500);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(236, 72, 153, 0.08));
+  color: var(--color-bloom-700);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.15);
+}
+
+.q-chip.multi.selected {
+  border-color: var(--color-bloom-400);
+  background: var(--color-bloom-100);
+}
+
+/* Range slider */
+.q-range-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.q-range {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 100px;
+  background: linear-gradient(90deg, var(--color-bloom-200), var(--color-bloom-400));
+  outline: none;
+}
+
+.q-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+  border: 3px solid white;
+  transition: transform 0.15s ease;
+}
+
+.q-range::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.q-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+  border: 3px solid white;
+}
+
+.q-range-value {
+  min-width: 60px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-bloom-700);
+  background: var(--color-bloom-50);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* Pain slider */
+.q-pain-slider {
+  padding: 0 4px;
+}
+
+.q-pain-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.7rem;
+  color: var(--color-warm-400);
+}
+
+.q-pain-current {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-bloom-600);
+  background: var(--color-bloom-50);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -8px;
+}
+
+/* Navigation */
+.q-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-warm-100);
+}
+
+.q-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px -3px rgba(168, 85, 247, 0.4);
+  font-family: var(--font-body);
+}
+
+.q-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -3px rgba(168, 85, 247, 0.5);
+}
+
+.q-btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-warm-500);
+  font-weight: 500;
+  font-size: 0.85rem;
+  border: 2px solid var(--color-warm-200);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.q-btn-secondary:hover {
+  border-color: var(--color-bloom-300);
+  color: var(--color-bloom-600);
+}
+
+.q-btn-submit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 32px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px -3px rgba(34, 197, 94, 0.4);
+  font-family: var(--font-body);
+}
+
+.q-btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -3px rgba(34, 197, 94, 0.5);
+}
+
+.q-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.q-error {
+  color: #f43f5e;
+  font-size: 0.8rem;
+  text-align: center;
+  margin-top: 8px;
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Spinner */
+.q-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: q-spin 0.6s linear infinite;
+}
+
+@keyframes q-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ---- Print styles for PDF ---- */
 @media print {
   body {
@@ -418,3 +821,4 @@ h1, h2, h3, h4, h5, h6 {
     display: none !important;
   }
 }
+

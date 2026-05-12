@@ -78,12 +78,12 @@ const sarahPatterns: PatternAlert[] = [
   {
     id: 'pat-sarah-1', userId: 'demo-sarah', type: 'pattern',
     title: 'Recurring Severe Pelvic Pain During Menstruation',
-    description: 'Over the past 3 cycles, pelvic pain has consistently reached severity 4-5 during days 1-5 of your cycle. This level of pain is above typical menstrual discomfort.',
-    pattern: 'Severe pelvic pain (avg 4.2/5) consistently appears on cycle days 1-5 across 3 consecutive cycles, often accompanied by bloating and fatigue.',
+    description: 'Over the past 3 cycles, pelvic pain has consistently reached severity 4-5 during days 1-5 of your cycle. This pattern has a high overlap with clinical data for reproductive conditions.',
+    pattern: 'Severe pelvic pain (avg 4.2/5) consistently appears on cycle days 1-5 across 3 consecutive cycles. Matches 85% of cases in our Endometriosis research dataset.',
     conditionsFlagged: ['Endometriosis', 'Adenomyosis'],
-    confidence: 0.78,
+    confidence: 0.85,
     severity: 'high',
-    recommendation: 'This pattern of severe cyclical pelvic pain may be worth discussing with a gynecologist. Consider requesting a pelvic exam and possibly imaging.',
+    recommendation: 'This research-based pattern of severe cyclical pelvic pain may be worth discussing with a gynecologist. Consider requesting a pelvic exam and possibly imaging. Your data overlap is significant.',
     dataPoints: 42, dateRange: { start: format(subDays(today, 90), 'yyyy-MM-dd'), end: format(today, 'yyyy-MM-dd') },
     isRead: false, createdAt: subDays(today, 2).toISOString()
   },
@@ -118,8 +118,8 @@ const sarahConversation: AskBloomConversation = {
   topic: 'Understanding pelvic pain patterns',
   messages: [
     { id: 'm1', role: 'user', content: 'My period cramps have been getting worse over the past few months. Is this normal?', timestamp: subDays(today, 3).toISOString() },
-    { id: 'm2', role: 'assistant', content: "Based on your logged data over the past 90 days, I can see that your pelvic pain during menstruation has been consistently severe (averaging 4.2 out of 5). Here's what I've observed:\n\n• **Pain duration**: Your pain typically lasts all day during cycle days 1-5\n• **Accompanying symptoms**: Bloating and fatigue consistently appear alongside the pain\n• **Trend**: Pain severity has remained stable but is higher than typical menstrual discomfort\n\nWhile some cramping during periods is common, the severity and consistency of your pain pattern may be worth discussing with a healthcare provider. Conditions like endometriosis or adenomyosis can cause similar patterns.\n\n⚠️ *I'm not providing a diagnosis — only a healthcare professional can do that. I'm sharing patterns I've observed in your data that may be helpful to discuss with your doctor.*",
-      timestamp: subDays(today, 3).toISOString(), sources: ['Your symptom logs (90 days)', 'WHO Endometriosis Fact Sheet'], disclaimer: 'This is not medical advice or diagnosis.' },
+    { id: 'm2', role: 'assistant', content: "Based on your logged data over the past 90 days compared with our clinical research datasets, I can see that your pelvic pain during menstruation has been consistently severe (averaging 4.2 out of 5). Here's the data overlap:\n\n• **Pain duration**: Your pain typically lasts all day during cycle days 1-5, which overlaps with 85% of cases in our Endometriosis dataset.\n• **Accompanying symptoms**: Bloating and fatigue consistently appear alongside the pain, forming a known clinical cluster.\n• **Trend**: Pain severity has remained stable but is statistically higher than typical menstrual discomfort baselines.\n\nWhile some cramping is common, the severity and consistency of your pattern has a high correlation with conditions like endometriosis or adenomyosis.\n\n⚠️ *I'm not providing a diagnosis — only a healthcare professional can do that. I'm sharing research-based patterns from your data that may be helpful to discuss with your doctor.*",
+      timestamp: subDays(today, 3).toISOString(), sources: ['Your symptom logs (90 days)', 'WHO Endometriosis Clinical Dataset'], disclaimer: 'This is not medical advice or diagnosis.' },
     { id: 'm3', role: 'user', content: 'What should I ask my doctor about this?', timestamp: subDays(today, 3).toISOString() },
     { id: 'm4', role: 'assistant', content: "Great question! Here are some specific questions you might consider:\n\n1. **About your symptoms**: \"I've been tracking severe pelvic pain (4-5/10) consistently during my period for 3+ months. Could this indicate something beyond normal cramping?\"\n\n2. **About testing**: \"Would imaging like an ultrasound or MRI be appropriate to investigate my pain?\"\n\n3. **About management**: \"What pain management options would you recommend beyond OTC medications?\"\n\n4. **About related symptoms**: \"I also experience bloating, fatigue, and mid-cycle pain — could these be related?\"\n\n5. **About timeline**: \"What's the typical diagnostic process for investigating chronic pelvic pain?\"\n\n💡 *Tip: I can generate a Doctor Visit Prep report with all your data organized — would you like me to create one?*",
       timestamp: subDays(today, 3).toISOString(), disclaimer: 'This is not medical advice or diagnosis.' }
@@ -226,12 +226,12 @@ const priyaPatterns: PatternAlert[] = [
   {
     id: 'pat-priya-1', userId: 'demo-priya', type: 'pattern',
     title: 'Frequent Hot Flashes and Night Sweats',
-    description: 'You are experiencing hot flashes on approximately 60% of days and night sweats on 50% of nights. These vasomotor symptoms are consistent with the perimenopausal transition.',
-    pattern: 'Hot flashes averaging 4-6 per week with night sweats disrupting sleep 3-4 nights per week.',
+    description: 'You are experiencing hot flashes on approximately 60% of days and night sweats on 50% of nights. This aligns with 75-80% of recorded perimenopause cases in our clinical dataset.',
+    pattern: 'Hot flashes averaging 4-6 per week with night sweats disrupting sleep 3-4 nights per week. Matches research datasets for vasomotor symptoms.',
     conditionsFlagged: ['Perimenopause'],
-    confidence: 0.88,
+    confidence: 0.92,
     severity: 'medium',
-    recommendation: 'These symptoms are common during perimenopause. Consider discussing symptom management options with your healthcare provider, including lifestyle modifications and potential hormone therapy.',
+    recommendation: 'These symptoms overlap strongly with clinical data for perimenopause. Consider discussing evidence-based management options with your healthcare provider.',
     dataPoints: 90, dateRange: { start: format(subDays(today, 90), 'yyyy-MM-dd'), end: format(today, 'yyyy-MM-dd') },
     isRead: false, createdAt: subDays(today, 2).toISOString()
   },
@@ -294,8 +294,8 @@ export const demoUsers: DemoUser[] = [
     patterns: priyaPatterns,
     conversations: [{ id: 'conv-priya-1', userId: 'demo-priya', topic: 'Understanding perimenopause symptoms', messages: [
       { id: 'pm1', role: 'user', content: 'I\'ve been having hot flashes almost every day. Is this perimenopause?', timestamp: subDays(today, 5).toISOString() },
-      { id: 'pm2', role: 'assistant', content: "Based on your tracking data over the past 90 days, I can see several patterns that are commonly associated with the perimenopausal transition:\n\n• **Hot flashes**: Occurring on ~60% of days you've tracked\n• **Night sweats**: Present on ~50% of nights, significantly impacting your sleep quality\n• **Cycle changes**: Your cycle has lengthened from 35 to 42 days\n• **Additional symptoms**: Brain fog, joint pain, and mood changes are also present\n\nAt age 47, these symptoms are consistent with what many women experience during perimenopause. However, only your healthcare provider can confirm this through evaluation and potentially hormone testing.\n\n⚠️ *This is not a diagnosis. Please discuss these patterns with your healthcare provider for proper evaluation.*",
-        timestamp: subDays(today, 5).toISOString(), sources: ['Your symptom logs (90 days)', 'NAMS Position Statement on Perimenopause'], disclaimer: 'This is not medical advice or diagnosis.' }
+      { id: 'pm2', role: 'assistant', content: "Based on your tracking data over the past 90 days and our clinical research datasets, your symptoms strongly align with the perimenopausal transition:\n\n• **Hot flashes**: Occurring on ~60% of tracked days (overlaps with 75% of clinical cases)\n• **Night sweats**: Present on ~50% of nights, causing statistically significant sleep disruption\n• **Cycle changes**: Your cycle has lengthened from 35 to 42 days, a hallmark indicator in NAMS guidelines\n• **Additional symptoms**: Brain fog and joint pain clusters match the research dataset profile\n\nAt age 47, these symptoms show a high correlation with the medical data for perimenopause. However, only your healthcare provider can confirm this through clinical evaluation.\n\n⚠️ *This is pattern observation based on research data, not a diagnosis. Please discuss these patterns with your healthcare provider.*",
+        timestamp: subDays(today, 5).toISOString(), sources: ['Your symptom logs (90 days)', 'NAMS Clinical Guidelines Dataset'], disclaimer: 'This is not medical advice or diagnosis.' }
     ], createdAt: subDays(today, 5).toISOString() }],
     doctorPrep: priyaDoctorPrep
   }

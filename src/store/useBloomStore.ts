@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, UserProfile, SymptomLog, PatternAlert, AskBloomConversation, DoctorPrepReport, OnboardingData } from '../types';
+import type { User, UserProfile, SymptomLog, PatternAlert, AskBloomConversation, DoctorPrepReport, OnboardingData, QuestionnaireData } from '../types';
 import { demoUsers } from '../data/demoData';
 import { loadUserProfile, loadSymptomLogs } from '../lib/authService';
 import { submitOnboarding as submitOnboardingToDB } from '../lib/onboardingService';
@@ -151,6 +151,8 @@ interface BloomState {
   // Onboarding
   submitOnboarding: (userId: string, data: OnboardingData) => Promise<void>;
   setOnboardingComplete: (complete: boolean) => void;
+  saveQuestionnaire: (data: QuestionnaireData) => Promise<void>;
+  skipQuestionnaire: () => void;
 
   // Data Actions
   addSymptomLog: (log: SymptomLog) => void;
@@ -329,7 +331,7 @@ export const useBloomStore = create<BloomState>()(
         };
 
         const { currentUser } = get();
-        saveCachedProfile({ ...profile, email: currentUser?.email });
+        saveCachedProfile({ ...profile, email: currentUser?.email ?? '' });
 
         set({
           userProfile: profile,
@@ -348,6 +350,10 @@ export const useBloomStore = create<BloomState>()(
       },
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
+      saveQuestionnaire: async () => {
+        set({ onboardingComplete: true });
+      },
+      skipQuestionnaire: () => set({ onboardingComplete: true }),
 
       // ---- Data ----
 

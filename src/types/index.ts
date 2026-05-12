@@ -169,6 +169,28 @@ export interface Condition {
   references: string[];
 }
 
+export interface ResearchSymptom {
+  name: string;
+  probability: number;
+  avg_severity: number;
+}
+
+export interface ResearchPattern {
+  description: string;
+  frequency: string;
+  cycle_phase: string;
+}
+
+export interface ResearchDataset {
+  conditionId: string;
+  condition: string;
+  symptoms: ResearchSymptom[];
+  patterns: ResearchPattern[];
+  misdiagnoses: string[];
+  avg_diagnosis_delay: string;
+  life_stages: string[];
+}
+
 export interface LifeStageInfo {
   stage: LifeStage;
   ageRange: string;
@@ -220,3 +242,41 @@ export interface DemoUser {
   conversations: AskBloomConversation[];
   doctorPrep: DoctorPrepReport;
 }
+
+// ---- Registration & Questionnaire ----
+
+export interface QuestionnaireData {
+  // Step 1 — Personal Info
+  name: string;
+  dateOfBirth: string;
+  gender: string;
+  pronouns: string;
+
+  // Step 2 — Cycle Info
+  lastPeriodStart: string;
+  avgCycleLength: number;
+  avgPeriodDuration: number;
+  cycleRegularity: string;
+  flowIntensity: string;
+
+  // Step 3 — Symptoms & Health
+  experiencePms: string;
+  commonSymptoms: string[];
+  painLevel: number;
+  diagnosedConditions: string[];
+  currentBirthControl: string;
+
+  // Step 4 — Lifestyle
+  tryingToConceive: string;
+  avgSleepHours: number;
+  exerciseFrequency: string;
+  stressLevel: string;
+  dietaryPreference: string;
+
+  // Step 5 — Goals & Preferences
+  primaryGoal: string;
+  trackedBefore: string;
+  doctorSummaries: string;
+  heardAbout: string;
+}
+
