@@ -178,7 +178,14 @@ export default function DoctorPrep() {
           <h3 className="font-semibold flex items-center gap-2 mb-2">
             <Calendar size={16} className="text-bloom-600" /> Cycle Summary
           </h3>
-          <p className="text-sm text-warm-600">Average cycle length: <strong>{doctorPrep.cycleData.avgLength} days</strong></p>
+          <p className="text-sm text-warm-600">
+            Average cycle length:{' '}
+            <strong>
+              {doctorPrep.cycleData.avgLength > 0
+                ? `${doctorPrep.cycleData.avgLength} days`
+                : 'Not currently tracking cycles'}
+            </strong>
+          </p>
           {doctorPrep.cycleData.irregularities.length > 0 && (
             <ul className="mt-2 text-xs text-warm-500 space-y-1">
               {doctorPrep.cycleData.irregularities.map((ir, i) => (

@@ -196,6 +196,8 @@ export interface LifeStageInfo {
   ageRange: string;
   description: string;
   commonExperiences: string[];
+  bodySignals: string[];
+  intimacyAndRelationships: string[];
   prioritySymptoms: string[];
   uiTheme: {
     primary: string;
@@ -237,6 +239,7 @@ export interface AskBloomConversation {
 
 export interface DemoUser {
   user: User;
+  profile: UserProfile;
   symptomLogs: SymptomLog[];
   patterns: PatternAlert[];
   conversations: AskBloomConversation[];

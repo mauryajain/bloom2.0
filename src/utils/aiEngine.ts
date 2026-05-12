@@ -3,10 +3,11 @@
 // Real Edge Function call + fixed emergency keyword list
 // ============================================================
 
-import { SymptomLog, PatternAlert, AskBloomMessage } from '../types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { SymptomLog, PatternAlert, AskBloomMessage, UserProfile } from '../types';
 import { conditionLibrary } from '../data/conditions';
 import { supabase } from '../lib/supabase';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { buildSystemPrompt } from '../lib/buildSystemPrompt';
 
 // ---- Emergency Detection (expanded keyword list) ----
 const EMERGENCY_KEYWORDS = [
@@ -30,34 +31,39 @@ export function checkEmergencySymptoms(symptoms: string[]): { isEmergency: boole
   };
 }
 
-// ---- Real AI call via Supabase Edge Function or Direct Gemini ----
-export async function askBloomAI(userMessage: string): Promise<AskBloomMessage> {
+// ---- Real AI call ----
+export async function askBloomAI(userMessage: string, profile?: UserProfile | null): Promise<AskBloomMessage> {
   try {
     const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+    const emergencyCheck = checkEmergencySymptoms([userMessage]);
+    if (emergencyCheck) {
+      return {
+        id: `bloom-${Date.now()}`,
+        role: 'assistant',
+        content: emergencyCheck.message,
+        timestamp: new Date().toISOString(),
+        isEmergency: true,
+      };
+    }
+
     if (geminiKey) {
-      // Local emergency check
-      const emergencyCheck = checkEmergencySymptoms([userMessage]);
-      if (emergencyCheck) {
-        return {
-          id: `bloom-${Date.now()}`,
-          role: 'assistant',
-          content: emergencyCheck.message,
-          timestamp: new Date().toISOString(),
-          isEmergency: true,
-        };
-      }
+      const systemInstruction = profile
+        ? buildSystemPrompt(profile)
+        : 'You are Bloom, a women\'s health AI companion. Never diagnose. Always recommend consulting a healthcare professional.';
 
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-      const prompt = `You are Bloom, an AI assistant for women's health tracking. Answer the following query empathetically and accurately. Remind the user you are an AI, not a doctor. User query: ${userMessage}`;
-      
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        systemInstruction,
+      });
+
+      const result = await model.generateContent(userMessage);
 
       return {
         id: `bloom-${Date.now()}`,
         role: 'assistant',
-        content: text,
+        content: result.response.text(),
         timestamp: new Date().toISOString(),
         isEmergency: false,
         disclaimer: 'This is not medical advice or diagnosis. Always consult a healthcare professional.',

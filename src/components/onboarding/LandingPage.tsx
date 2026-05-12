@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBloomStore } from '../../store/useBloomStore';
 import { signIn, signUp } from '../../lib/authService';
+import { demoUsers } from '../../data/demoData';
 import { Flower2, ArrowRight, Shield, Brain, FileText, Heart, Sparkles, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 type AuthTab = 'demo' | 'login' | 'signup';
@@ -70,6 +71,22 @@ export default function LandingPage() {
     loginAsDemo(userId);
     navigate('/dashboard');
   };
+
+  const demoAccents = [
+    'from-violet-400 to-violet-600',
+    'from-bloom-400 to-bloom-600',
+    'from-pink-400 to-pink-600',
+    'from-rose-400 to-rose-600',
+    'from-indigo-400 to-indigo-600',
+    'from-fuchsia-400 to-fuchsia-600',
+    'from-sage-400 to-sage-600',
+  ];
+
+  const stageLabel = (stage: string) =>
+    stage
+      .split('-')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -135,28 +152,26 @@ export default function LandingPage() {
                 <Sparkles size={12} className="text-bloom-400" />
                 Choose a demo profile — no account needed
               </p>
-              <button
-                className="w-full glass-card p-4 flex items-center gap-4 hover:shadow-bloom transition-all group"
-                onClick={() => handleDemo('demo-sarah')}
-              >
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-bloom-400 to-bloom-600 flex items-center justify-center text-white font-bold text-lg">S</div>
-                <div className="flex-1 text-left">
-                  <p className="font-semibold">Sarah Mitchell, 29</p>
-                  <p className="text-xs text-warm-400">Reproductive stage · 90 days of data · Endometriosis patterns</p>
-                </div>
-                <ArrowRight size={18} className="text-warm-300 group-hover:text-bloom-500 transition-colors" />
-              </button>
-              <button
-                className="w-full glass-card p-4 flex items-center gap-4 hover:shadow-bloom transition-all group"
-                onClick={() => handleDemo('demo-priya')}
-              >
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white font-bold text-lg">P</div>
-                <div className="flex-1 text-left">
-                  <p className="font-semibold">Priya Sharma, 47</p>
-                  <p className="text-xs text-warm-400">Perimenopause · 90 days of data · Hot flash patterns</p>
-                </div>
-                <ArrowRight size={18} className="text-warm-300 group-hover:text-bloom-500 transition-colors" />
-              </button>
+              <div className="max-h-[30rem] overflow-y-auto pr-1 space-y-3">
+                {demoUsers.map((demo, index) => (
+                  <button
+                    key={demo.user.id}
+                    className="w-full glass-card p-4 flex items-center gap-4 hover:shadow-bloom transition-all group"
+                    onClick={() => handleDemo(demo.user.id)}
+                  >
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${demoAccents[index % demoAccents.length]} flex items-center justify-center text-white font-bold text-lg shrink-0`}>
+                      {demo.user.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="font-semibold">{demo.user.name}, {demo.user.age}</p>
+                      <p className="text-xs text-warm-400">
+                        {stageLabel(demo.user.lifeStage)} - {demo.symptomLogs.length} days - {demo.patterns[0]?.conditionsFlagged[0] ?? 'Pattern insights'}
+                      </p>
+                    </div>
+                    <ArrowRight size={18} className="text-warm-300 group-hover:text-bloom-500 transition-colors shrink-0" />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

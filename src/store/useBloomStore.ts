@@ -166,6 +166,8 @@ interface BloomState {
   sidebarOpen: boolean;
   currentView: string;
   onboardingComplete: boolean;
+  showStageGuide: boolean;
+  seenStageGuides: string[];
 
   // Auth Actions
   loginAsDemo: (userId: string) => void;
@@ -178,6 +180,7 @@ interface BloomState {
   setOnboardingComplete: (complete: boolean) => void;
   saveQuestionnaire: (data: QuestionnaireData) => Promise<void>;
   skipQuestionnaire: () => void;
+  dismissStageGuide: () => void;
 
   // Data Actions
   addSymptomLog: (log: SymptomLog) => void;
@@ -207,45 +210,27 @@ export const useBloomStore = create<BloomState>()(
       sidebarOpen: false,
       currentView: 'dashboard',
       onboardingComplete: false,
+      showStageGuide: false,
+      seenStageGuides: [],
 
       // ---- Auth ----
 
       loginAsDemo: (userId) => {
         const demo = demoUsers.find(d => d.user.id === userId);
         if (demo) {
-          // Build a minimal UserProfile from demo user for AI compatibility
-          const demoProfile: UserProfile = {
-            userId: demo.user.id,
-            nickname: demo.user.name.split(' ')[0],
-            dateOfBirth: '',
-            age: demo.user.age,
-            pronouns: 'she/her',
-            lifeStage: demo.user.lifeStage,
-            cycleStatus: 'regular',
-            cycleLength: demo.user.cycleLength,
-            symptoms: demo.symptomLogs[0]?.symptoms.map(s => s.name) ?? [],
-            symptomDuration: '3-12 months',
-            dismissalHistory: [],
-            diagnosedConditions: [],
-            familyHistory: [],
-            goals: ['understand my body', 'prepare for doctor visits'],
-            urgencyScore: 3,
-            communicationStyle: 'balanced',
-            reminderPreferences: [],
-            hasDoctor: true,
-            isMinor: false,
-            onboardingComplete: true,
-          };
+          const { seenStageGuides } = get();
           set({
             isAuthenticated: true,
             currentUser: demo.user,
-            userProfile: demoProfile,
+            userProfile: demo.profile,
             isDemoMode: true,
             symptomLogs: demo.symptomLogs,
             patterns: demo.patterns,
             conversations: demo.conversations,
             doctorPrep: demo.doctorPrep,
             onboardingComplete: true,
+            showStageGuide: !seenStageGuides.includes(demo.user.lifeStage),
+            currentView: 'dashboard',
             authLoading: false,
           });
         }
@@ -375,6 +360,7 @@ export const useBloomStore = create<BloomState>()(
         set({
           userProfile: profile,
           onboardingComplete: true,
+          showStageGuide: !get().seenStageGuides.includes(data.lifeStage),
           currentUser: currentUser
             ? { ...currentUser, name: data.nickname, age, lifeStage: data.lifeStage as User['lifeStage'], cycleLength: data.cycleLength }
             : currentUser,
@@ -387,6 +373,15 @@ export const useBloomStore = create<BloomState>()(
         set({ onboardingComplete: true });
       },
       skipQuestionnaire: () => set({ onboardingComplete: true }),
+      dismissStageGuide: () => {
+        const stage = get().currentUser?.lifeStage;
+        set(s => ({
+          showStageGuide: false,
+          seenStageGuides: stage && !s.seenStageGuides.includes(stage)
+            ? [...s.seenStageGuides, stage]
+            : s.seenStageGuides,
+        }));
+      },
 
       // ---- Data ----
 
@@ -440,6 +435,7 @@ export const useBloomStore = create<BloomState>()(
         userProfile: s.userProfile,
         isDemoMode: s.isDemoMode,
         onboardingComplete: s.onboardingComplete,
+        seenStageGuides: s.seenStageGuides,
         currentView: s.currentView,
         // Demo users persist their data (no DB to re-fetch from)
         symptomLogs: s.isDemoMode ? s.symptomLogs : [],

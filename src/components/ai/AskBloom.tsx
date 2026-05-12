@@ -124,7 +124,7 @@ export default function AskBloom() {
         const { generateBloomResponse } = await import('../../utils/aiEngine');
         response = generateBloomResponse(userInput, symptomLogs);
       } else {
-        response = await askBloomAI(userInput);
+        response = await askBloomAI(userInput, userProfile);
       }
       addConversationMessage(conv.id, response);
     } catch (err) {
