@@ -48,7 +48,7 @@ export async function askBloomAI(userMessage: string): Promise<AskBloomMessage> 
       }
 
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
       const prompt = `You are Bloom, an AI assistant for women's health tracking. Answer the following query empathetically and accurately. Remind the user you are an AI, not a doctor. User query: ${userMessage}`;
       
       const result = await model.generateContent(prompt);
