@@ -9,8 +9,9 @@ import { SymptomLog, SymptomEntry, Severity } from '../../types';
 import { format, parseISO, subDays } from 'date-fns';
 import {
   Plus, Calendar, ChevronDown, ChevronUp, Search,
-  Flame, CloudRain, Heart, Brain, Moon, Utensils, Eye
+  Flame, CloudRain, Heart, Brain, Moon, Utensils, Eye, Mic
 } from 'lucide-react';
+import VoiceSymptomLogger from './VoiceSymptomLogger';
 
 const SYMPTOM_PRESETS = [
   { name: 'Cramps', category: 'pain' as const, icon: '🔥' },
@@ -41,6 +42,7 @@ const severityColors = ['', '#22c55e', '#84cc16', '#f59e0b', '#f97316', '#ef4444
 export default function SymptomJournal() {
   const { symptomLogs, addSymptomLog, currentUser, isDemoMode } = useBloomStore();
   const [showLogger, setShowLogger] = useState(false);
+  const [showVoiceLogger, setShowVoiceLogger] = useState(false);
   const [selectedSymptoms, setSelectedSymptoms] = useState<{ name: string; category: string; severity: Severity }[]>([]);
   const [mood, setMood] = useState('');
   const [energy, setEnergy] = useState(5);
@@ -142,10 +144,27 @@ export default function SymptomJournal() {
           <h1 className="text-2xl font-bold font-[var(--font-display)]">Symptom Journal</h1>
           <p className="text-warm-400 text-sm mt-1">Track your daily symptoms, mood, and energy</p>
         </div>
-        <button className="btn-bloom flex items-center gap-2" onClick={() => setShowLogger(!showLogger)}>
-          <Plus size={16} /> Log Symptoms
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="relative group px-4 py-2.5 rounded-xl bg-gradient-to-br from-rose-400 to-bloom-500 text-white font-medium text-sm flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 transition-all"
+            onClick={() => { setShowVoiceLogger(!showVoiceLogger); setShowLogger(false); }}
+          >
+            <Mic size={16} /> Voice Log
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse" />
+          </button>
+          <button className="btn-bloom flex items-center gap-2" onClick={() => { setShowLogger(!showLogger); setShowVoiceLogger(false); }}>
+            <Plus size={16} /> Log Symptoms
+          </button>
+        </div>
       </div>
+
+      {/* Voice Logger */}
+      {showVoiceLogger && (
+        <VoiceSymptomLogger
+          onClose={() => setShowVoiceLogger(false)}
+          onLogged={() => setShowVoiceLogger(false)}
+        />
+      )}
 
       {/* Logger Modal */}
       {showLogger && (
