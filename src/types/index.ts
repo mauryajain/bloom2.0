@@ -219,6 +219,30 @@ export interface DoctorPrepReport {
   cycleData: { avgLength: number; irregularities: string[] };
 }
 
+// ---- Body Forecast ----
+
+export interface DayForecast {
+  date: string;
+  dayName: string;
+  riskLevel: 'low' | 'moderate' | 'high' | 'severe';
+  predictedSymptoms: { name: string; probability: number }[];
+  energyPrediction: number;
+  confidence: number;
+  recommendation: string;
+}
+
+export interface BodyForecast {
+  id: string;
+  userId: string;
+  generatedAt: string;
+  weekStart: string;
+  weekEnd: string;
+  days: DayForecast[];
+  overallWarning: string;
+  keyRecommendations: string[];
+  disclaimer: string;
+}
+
 export interface AskBloomMessage {
   id: string;
   role: 'user' | 'assistant';

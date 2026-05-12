@@ -5,11 +5,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import CryptoJS from 'crypto-js';
-import type { User, UserProfile, SymptomLog, PatternAlert, AskBloomConversation, DoctorPrepReport, OnboardingData, QuestionnaireData } from '../types';
+import type { User, UserProfile, SymptomLog, PatternAlert, AskBloomConversation, DoctorPrepReport, OnboardingData, QuestionnaireData, BodyForecast } from '../types';
 import { demoUsers } from '../data/demoData';
 import { loadUserProfile, loadSymptomLogs } from '../lib/authService';
 import { submitOnboarding as submitOnboardingToDB } from '../lib/onboardingService';
 import { detectPatterns } from '../utils/aiEngine';
+import { generateBodyForecast as generateForecast } from '../utils/bodyForecastEngine';
 
 const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'bloom-secure-storage-key';
 
@@ -161,6 +162,7 @@ interface BloomState {
   patterns: PatternAlert[];
   conversations: AskBloomConversation[];
   doctorPrep: DoctorPrepReport | null;
+  bodyForecast: BodyForecast | null;
 
   // UI
   sidebarOpen: boolean;
@@ -186,6 +188,7 @@ interface BloomState {
   addSymptomLog: (log: SymptomLog) => void;
   refreshDoctorPrep: () => void;
   markPatternRead: (id: string) => void;
+  generateBodyForecast: () => Promise<void>;
   addConversationMessage: (convId: string, message: AskBloomConversation['messages'][number]) => void;
   addConversation: (conv: AskBloomConversation) => void;
 
@@ -207,6 +210,7 @@ export const useBloomStore = create<BloomState>()(
       patterns: [],
       conversations: [],
       doctorPrep: null,
+      bodyForecast: null,
       sidebarOpen: false,
       currentView: 'dashboard',
       onboardingComplete: false,
@@ -215,7 +219,7 @@ export const useBloomStore = create<BloomState>()(
 
       // ---- Auth ----
 
-      loginAsDemo: (userId) => {
+      loginAsDemo: async (userId) => {
         const demo = demoUsers.find(d => d.user.id === userId);
         if (demo) {
           const { seenStageGuides } = get();
@@ -233,6 +237,7 @@ export const useBloomStore = create<BloomState>()(
             currentView: 'dashboard',
             authLoading: false,
           });
+          get().generateBodyForecast();
         }
       },
 
@@ -290,6 +295,7 @@ export const useBloomStore = create<BloomState>()(
             onboardingComplete: mergedProfile?.onboardingComplete ?? false,
             authLoading: false,
           });
+          get().generateBodyForecast();
         } catch (err) {
           console.error('[loginAsReal]', err);
           set({ authLoading: false });
@@ -305,6 +311,7 @@ export const useBloomStore = create<BloomState>()(
         patterns: [],
         conversations: s.conversations, // Preserve conversations for all users across logouts
         doctorPrep: null,
+        bodyForecast: null,
         onboardingComplete: false,
         currentView: 'dashboard',
       })),
@@ -411,6 +418,13 @@ export const useBloomStore = create<BloomState>()(
         patterns: s.patterns.map(p => p.id === id ? { ...p, isRead: true } : p),
       })),
 
+      generateBodyForecast: async () => {
+        const { currentUser, userProfile, symptomLogs, patterns } = get();
+        if (!currentUser) return;
+        const forecast = await generateForecast(currentUser, userProfile, symptomLogs, patterns);
+        set({ bodyForecast: forecast });
+      },
+
       addConversationMessage: (convId, message) => set(s => ({
         conversations: s.conversations.map(c =>
           c.id === convId ? { ...c, messages: [...c.messages, message] } : c
@@ -443,6 +457,7 @@ export const useBloomStore = create<BloomState>()(
         // ALWAYS persist conversations locally so users can see previous chats (encrypted!)
         conversations: s.conversations,
         doctorPrep: s.doctorPrep,
+        bodyForecast: s.bodyForecast,
       }),
     }
   )

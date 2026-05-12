@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { getLifeStageInfo } from '../../data/lifeStages';
 import BloomLetter from './BloomLetter';
+import BodyForecast from './BodyForecast';
 
 function checkApproachingTransition(
   age: number,
@@ -207,6 +208,8 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      <BodyForecast />
 
       <BloomLetter />
 
