@@ -6,23 +6,44 @@
 import { useBloomStore } from '../../store/useBloomStore';
 import { FileText, Download, Calendar, TrendingUp, MessageCircle, Clock, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useEffect } from 'react';
+
+const addDays = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
 
 export default function DoctorPrep() {
-  const { doctorPrep, patterns, currentUser } = useBloomStore();
+  const { doctorPrep, currentUser, symptomLogs, refreshDoctorPrep } = useBloomStore();
+
+  useEffect(() => {
+    refreshDoctorPrep();
+  }, [refreshDoctorPrep]);
 
   const handlePrint = () => {
     window.print();
   };
 
   if (!doctorPrep) {
+    const remainingLogs = Math.max(21 - symptomLogs.length, 0);
+
     return (
       <div className="text-center py-20">
         <FileText size={48} className="text-warm-200 mx-auto mb-4" />
         <h2 className="text-xl font-semibold mb-2">No Report Available</h2>
-        <p className="text-warm-400 text-sm">Log at least 6 weeks of symptoms to generate a doctor visit prep report.</p>
+        <p className="text-warm-400 text-sm">Log at least 3 weeks of symptoms to generate your report.</p>
+        {remainingLogs > 0 && (
+          <p className="text-xs text-warm-400 mt-2">
+            {symptomLogs.length}/21 symptom logs recorded. {remainingLogs} more to go.
+          </p>
+        )}
       </div>
     );
   }
+
+  const generatedDate = new Date(doctorPrep.generatedAt);
+  const nextUpdateDate = addDays(generatedDate, 15);
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -34,6 +55,9 @@ export default function DoctorPrep() {
           </h1>
           <p className="text-warm-400 text-sm mt-1">
             AI-generated summary of your symptom data for your healthcare provider
+          </p>
+          <p className="text-xs text-warm-400 mt-2">
+            Last generated: {generatedDate.toLocaleDateString()} · Next update due: {nextUpdateDate.toLocaleDateString()}
           </p>
         </div>
         <button className="btn-bloom flex items-center gap-2" onClick={handlePrint}>
@@ -53,7 +77,8 @@ export default function DoctorPrep() {
           </div>
           <div className="text-right text-xs text-warm-400">
             <p>Report Period: {doctorPrep.dateRange.start} to {doctorPrep.dateRange.end}</p>
-            <p>Generated: {new Date(doctorPrep.generatedAt).toLocaleDateString()}</p>
+            <p>Generated: {generatedDate.toLocaleDateString()}</p>
+            <p>Next update: {nextUpdateDate.toLocaleDateString()}</p>
           </div>
         </div>
 

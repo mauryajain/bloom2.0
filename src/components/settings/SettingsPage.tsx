@@ -9,9 +9,17 @@ import { Settings, User, Bell, Shield, Palette } from 'lucide-react';
 import type { LifeStage } from '../../types';
 
 export default function SettingsPage() {
-  const { currentUser } = useBloomStore();
+  const { currentUser, userProfile } = useBloomStore();
 
   if (!currentUser) return null;
+
+  const profile = {
+    name: currentUser.name || userProfile?.nickname || '',
+    email: currentUser.email,
+    age: currentUser.age || userProfile?.age || '',
+    lifeStage: currentUser.lifeStage || userProfile?.lifeStage,
+    cycleLength: currentUser.cycleLength || userProfile?.cycleLength || 28,
+  };
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -28,19 +36,19 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-medium text-warm-500 mb-1 block">Name</label>
-            <input className="bloom-input" value={currentUser.name} readOnly />
+            <input className="bloom-input" value={profile.name} readOnly />
           </div>
           <div>
             <label className="text-xs font-medium text-warm-500 mb-1 block">Email</label>
-            <input className="bloom-input" value={currentUser.email} readOnly />
+            <input className="bloom-input" value={profile.email} readOnly />
           </div>
           <div>
             <label className="text-xs font-medium text-warm-500 mb-1 block">Age</label>
-            <input className="bloom-input" value={currentUser.age} readOnly />
+            <input className="bloom-input" value={profile.age} readOnly />
           </div>
           <div>
             <label className="text-xs font-medium text-warm-500 mb-1 block">Life Stage</label>
-            <select className="bloom-input" value={currentUser.lifeStage} disabled>
+            <select className="bloom-input" value={profile.lifeStage} disabled>
               {lifeStages.map(ls => (
                 <option key={ls.stage} value={ls.stage}>
                   {ls.stage.charAt(0).toUpperCase() + ls.stage.slice(1).replace('-', ' ')} ({ls.ageRange})
@@ -50,7 +58,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="text-xs font-medium text-warm-500 mb-1 block">Avg Cycle Length</label>
-            <input className="bloom-input" value={`${currentUser.cycleLength} days`} readOnly />
+            <input className="bloom-input" value={`${profile.cycleLength} days`} readOnly />
           </div>
         </div>
         <p className="text-xs text-warm-400 italic">Profile editing is disabled in demo mode.</p>

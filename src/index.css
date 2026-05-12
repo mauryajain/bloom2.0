@@ -259,14 +259,23 @@ h1, h2, h3, h4, h5, h6 {
 /* ---- Input ---- */
 .bloom-input {
   width: 100%;
+  display: block;
+  height: 44px;
   padding: 10px 16px;
   border: 2px solid var(--color-warm-200);
   border-radius: 12px;
   font-family: var(--font-body);
   font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-warm-800);
   transition: all 0.2s ease;
   background: white;
   outline: none;
+}
+
+.bloom-input::placeholder {
+  color: var(--color-warm-400);
+  opacity: 1;
 }
 
 .bloom-input:focus {

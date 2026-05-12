@@ -1,6 +1,5 @@
 // ============================================================
 // BLOOM — Core Type Definitions
-// Agent 1 (Full-Stack) + Agent 2 (Backend) shared types
 // ============================================================
 
 export type LifeStage =
@@ -25,6 +24,10 @@ export type SymptomCategory =
 
 export type Severity = 1 | 2 | 3 | 4 | 5;
 
+export type CommunicationStyle = 'warm' | 'clinical' | 'balanced';
+
+// ---- Auth & User ----
+
 export interface User {
   id: string;
   name: string;
@@ -42,6 +45,60 @@ export interface UserPreferences {
   dataSharing: boolean;
   lifeStageAdaptive: boolean;
 }
+
+// ---- Full User Profile (from DB) ----
+
+export interface UserProfile {
+  userId: string;
+  nickname: string;
+  dateOfBirth: string;
+  age: number;
+  pronouns: string;
+  lifeStage: LifeStage;
+  cycleStatus: string;
+  cycleLength: number;
+  symptoms: string[];
+  symptomDuration: string;
+  dismissalHistory: string[];
+  diagnosedConditions: string[];
+  familyHistory: string[];
+  goals: string[];
+  urgencyScore: number;
+  communicationStyle: CommunicationStyle;
+  reminderPreferences: string[];
+  hasDoctor: boolean;
+  isMinor: boolean;
+  onboardingComplete: boolean;
+}
+
+// ---- Onboarding ----
+
+export interface OnboardingData {
+  // Step 1
+  nickname: string;
+  dateOfBirth: string;
+  pronouns: string;
+  // Step 2
+  lifeStage: LifeStage | '';
+  cycleStatus: string;
+  cycleLength: number;
+  // Step 3
+  symptoms: string[];
+  symptomDuration: string;
+  dismissalHistory: string[];
+  // Step 4
+  diagnosedConditions: string[];
+  familyHistory: string[];
+  // Step 5
+  goals: string[];
+  urgencyScore: number;
+  // Step 6
+  communicationStyle: CommunicationStyle;
+  reminderPreferences: string[];
+  hasDoctor: boolean;
+}
+
+// ---- Symptom Tracking ----
 
 export interface SymptomLog {
   id: string;
@@ -69,7 +126,7 @@ export interface SymptomEntry {
 export interface MoodEntry {
   primary: string;
   secondary: string[];
-  score: number; // 1-10
+  score: number;
 }
 
 export interface SleepEntry {
@@ -77,6 +134,8 @@ export interface SleepEntry {
   quality: Severity;
   disturbances: string[];
 }
+
+// ---- Patterns & AI ----
 
 export interface PatternAlert {
   id: string;
@@ -86,7 +145,7 @@ export interface PatternAlert {
   description: string;
   pattern: string;
   conditionsFlagged: string[];
-  confidence: number; // 0-1
+  confidence: number;
   severity: 'low' | 'medium' | 'high' | 'urgent';
   recommendation: string;
   dataPoints: number;
@@ -143,6 +202,7 @@ export interface AskBloomMessage {
   timestamp: string;
   sources?: string[];
   disclaimer?: string;
+  isEmergency?: boolean;
 }
 
 export interface AskBloomConversation {

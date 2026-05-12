@@ -4,6 +4,8 @@
 // ============================================================
 
 import { useBloomStore } from '../../store/useBloomStore';
+import { useNavigate } from 'react-router-dom';
+import { signOut } from '../../lib/authService';
 import {
   LayoutDashboard, BookHeart, Brain, FileText,
   Library, Flower2, Settings, LogOut, Menu, X, Bell
@@ -19,13 +21,23 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const { currentView, setCurrentView, sidebarOpen, setSidebarOpen, currentUser, logout, patterns } = useBloomStore();
+  const { currentView, setCurrentView, sidebarOpen, setSidebarOpen, currentUser, logout, patterns, isDemoMode } = useBloomStore();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    if (!isDemoMode) await signOut();
+    logout();
+    navigate('/');
+  };
   const unreadAlerts = patterns.filter(p => !p.isRead).length;
 
   return (
     <>
       {/* Mobile hamburger */}
       <button
+        type="button"
+        aria-label={sidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        aria-expanded={sidebarOpen}
         className="mobile-nav fixed top-4 left-4 z-50 p-2 rounded-xl bg-white/80 backdrop-blur shadow-lg"
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
@@ -44,7 +56,7 @@ export default function Sidebar() {
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-white/80 backdrop-blur-xl border-r border-white/60 z-40 flex flex-col transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 sidebar-desktop`}
+        } md:translate-x-0`}
         style={{ boxShadow: '4px 0 24px -4px rgba(168,85,247,0.08)' }}
       >
         {/* Logo */}
@@ -94,13 +106,13 @@ export default function Sidebar() {
         <div className="p-4 border-t border-warm-100">
           <button
             className="nav-item w-full text-warm-400 hover:text-rose-500"
-            onClick={logout}
+            onClick={handleSignOut}
           >
             <LogOut size={18} />
             <span>Sign Out</span>
           </button>
           <p className="text-[10px] text-warm-300 text-center mt-2">
-            BLOOM v1.0 · Demo Mode
+            BLOOM v1.0 · {isDemoMode ? 'Demo Mode' : 'Live Mode'}
           </p>
         </div>
       </aside>

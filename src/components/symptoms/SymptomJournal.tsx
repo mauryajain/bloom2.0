@@ -39,7 +39,7 @@ const severityLabels = ['', 'Minimal', 'Mild', 'Moderate', 'Severe', 'Extreme'];
 const severityColors = ['', '#22c55e', '#84cc16', '#f59e0b', '#f97316', '#ef4444'];
 
 export default function SymptomJournal() {
-  const { symptomLogs, addSymptomLog, currentUser } = useBloomStore();
+  const { symptomLogs, addSymptomLog, currentUser, isDemoMode } = useBloomStore();
   const [showLogger, setShowLogger] = useState(false);
   const [selectedSymptoms, setSelectedSymptoms] = useState<{ name: string; category: string; severity: Severity }[]>([]);
   const [mood, setMood] = useState('');
@@ -72,7 +72,7 @@ export default function SymptomJournal() {
     );
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (selectedSymptoms.length === 0) return;
 
     const log: SymptomLog = {
@@ -96,6 +96,26 @@ export default function SymptomJournal() {
     };
 
     addSymptomLog(log);
+
+    // Persist to Supabase for real (non-demo) users
+    if (!isDemoMode && currentUser) {
+      try {
+        const { saveSymptomLog } = await import('../../lib/onboardingService');
+        await saveSymptomLog(currentUser.id, {
+          date: log.date,
+          cycleDay: log.cycleDay,
+          symptoms: log.symptoms,
+          mood: log.mood,
+          energy: log.energy,
+          sleep: log.sleep,
+          notes: log.notes,
+          tags: log.tags,
+        });
+      } catch (err) {
+        console.error('[SymptomJournal] Failed to save to DB:', err);
+      }
+    }
+
     setShowLogger(false);
     setSelectedSymptoms([]);
     setMood('');
