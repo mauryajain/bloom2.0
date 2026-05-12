@@ -284,7 +284,14 @@ export const useBloomStore = create<BloomState>()(
             : existingDoctorPrep;
 
           const currentConversations = get().conversations || [];
-          const userConversations = currentConversations.filter(c => c.userId === userId);
+          const hasUserConv = currentConversations.some(c => c.userId === userId);
+          const newConversations = hasUserConv ? currentConversations : (mergedProfile ? [...currentConversations, {
+            id: `conv-${userId}`,
+            userId,
+            topic: 'Your health journey',
+            messages: [],
+            createdAt: new Date().toISOString(),
+          }] : currentConversations);
 
           set({
             isAuthenticated: true,
@@ -293,13 +300,7 @@ export const useBloomStore = create<BloomState>()(
             isDemoMode: false,
             symptomLogs: logs,
             patterns: detectedPatterns,
-            conversations: userConversations.length > 0 ? userConversations : (mergedProfile ? [{
-              id: `conv-${userId}`,
-              userId,
-              topic: 'Your health journey',
-              messages: [],
-              createdAt: new Date().toISOString(),
-            }] : []),
+            conversations: newConversations,
             doctorPrep,
             onboardingComplete: mergedProfile?.onboardingComplete ?? false,
             authLoading: false,
@@ -310,18 +311,18 @@ export const useBloomStore = create<BloomState>()(
         }
       },
 
-      logout: () => set({
+      logout: () => set((s) => ({
         isAuthenticated: false,
         currentUser: null,
         userProfile: null,
         isDemoMode: false,
         symptomLogs: [],
         patterns: [],
-        conversations: [],
+        conversations: s.conversations, // Preserve conversations for all users across logouts
         doctorPrep: null,
         onboardingComplete: false,
         currentView: 'dashboard',
-      }),
+      })),
 
       setAuthLoading: (loading) => set({ authLoading: loading }),
 
@@ -362,7 +363,14 @@ export const useBloomStore = create<BloomState>()(
         saveCachedProfile({ ...profile, email: currentUser?.email ?? '' });
 
         const currentConversations = get().conversations || [];
-        const userConversations = currentConversations.filter(c => c.userId === userId);
+        const hasUserConv = currentConversations.some(c => c.userId === userId);
+        const newConversations = hasUserConv ? currentConversations : [...currentConversations, {
+          id: `conv-${userId}`,
+          userId,
+          topic: 'Your health journey',
+          messages: [],
+          createdAt: new Date().toISOString(),
+        }];
 
         set({
           userProfile: profile,
@@ -370,13 +378,7 @@ export const useBloomStore = create<BloomState>()(
           currentUser: currentUser
             ? { ...currentUser, name: data.nickname, age, lifeStage: data.lifeStage as User['lifeStage'], cycleLength: data.cycleLength }
             : currentUser,
-          conversations: userConversations.length > 0 ? userConversations : [{
-            id: `conv-${userId}`,
-            userId,
-            topic: 'Your health journey',
-            messages: [],
-            createdAt: new Date().toISOString(),
-          }],
+          conversations: newConversations,
         });
       },
 

@@ -9,12 +9,14 @@ import { Brain, Send, Sparkles, AlertTriangle, ShieldCheck, Wifi, WifiOff, Activ
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AskBloom() {
-  const { conversations, symptomLogs, addConversationMessage, isDemoMode, userProfile } = useBloomStore();
+  const { conversations, symptomLogs, addConversationMessage, isDemoMode, userProfile, currentUser } = useBloomStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [aiError, setAiError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const conv = conversations[0];
+  
+  // Find the conversation for the currently logged-in user
+  const conv = conversations.find(c => c.userId === currentUser?.id) || conversations[0];
   const chatIsEmpty = !conv || conv.messages.length === 0;
 
   const isConfigured = !!import.meta.env.VITE_SUPABASE_URL &&
