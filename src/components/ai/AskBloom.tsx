@@ -5,7 +5,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
 import { askBloomAI, checkEmergencySymptoms } from '../../utils/aiEngine';
-import { Brain, Send, Sparkles, AlertTriangle, ShieldCheck, Wifi, WifiOff, Activity, Zap, TrendingUp } from 'lucide-react';
+import { Send, Sparkles, AlertTriangle, ShieldCheck, Wifi, WifiOff, Activity, Zap, TrendingUp } from 'lucide-react';
+import BloomAvatar from './BloomAvatar';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AskBloom() {
@@ -157,13 +158,16 @@ export default function AskBloom() {
 
   return (
     <div className="space-y-4 flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
-      <div>
-        <h1 className="text-2xl font-bold font-[var(--font-display)] flex items-center gap-2">
-          <Brain className="text-bloom-500" size={24} /> Ask Bloom
-        </h1>
-        <p className="text-warm-400 text-sm mt-1">
-          AI-powered health insights {userProfile ? `personalised for ${userProfile.nickname}` : 'based on your data'}
-        </p>
+      <div className="flex items-center gap-3">
+        <BloomAvatar size="lg" isTyping={isTyping} />
+        <div>
+          <h1 className="text-2xl font-bold font-[var(--font-display)]">
+            Ask Bloom
+          </h1>
+          <p className="text-warm-400 text-sm mt-1">
+            AI-powered health insights {userProfile ? `personalised for ${userProfile.nickname}` : 'based on your data'}
+          </p>
+        </div>
       </div>
 
       {/* Status indicator */}
@@ -260,8 +264,8 @@ export default function AskBloom() {
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={msg.isEmergency ? 'chat-assistant border-2 border-rose-300 bg-rose-50' : msg.role === 'user' ? 'chat-user' : 'chat-assistant'}>
               {msg.role === 'assistant' && (
-                <div className="flex items-center gap-1 mb-2 text-bloom-600">
-                  <Sparkles size={12} /> <span className="text-xs font-semibold">Bloom AI</span>
+                <div className="flex items-center gap-2 mb-2 text-bloom-600">
+                  <BloomAvatar size="sm" /> <span className="text-xs font-semibold">Bloom AI</span>
                 </div>
               )}
               <div className="text-sm ai-content whitespace-pre-line">{msg.content}</div>
@@ -277,7 +281,7 @@ export default function AskBloom() {
           <div className="flex justify-start">
             <div className="chat-assistant">
               <div className="flex items-center gap-2 text-bloom-400">
-                <Sparkles size={14} className="animate-[pulse-soft_1.5s_ease-in-out_infinite]" />
+                <BloomAvatar size="sm" isTyping={true} />
                 <span className="text-sm">Bloom is thinking...</span>
               </div>
             </div>
