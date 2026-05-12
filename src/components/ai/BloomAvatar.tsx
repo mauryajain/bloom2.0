@@ -1,4 +1,4 @@
-import { Brain } from 'lucide-react';
+import { Bot } from 'lucide-react';
 
 interface BloomAvatarProps {
   isTyping?: boolean;
@@ -38,7 +38,7 @@ export default function BloomAvatar({ isTyping = false, size = 'md' }: BloomAvat
       
       {/* Center Icon */}
       <div className={`relative z-10 text-white transition-all duration-300 ${isTyping ? 'scale-90 animate-pulse' : 'scale-100'}`}>
-        <Brain size={iconSizes[size]} />
+        <Bot size={iconSizes[size]} />
       </div>
     </div>
   );
