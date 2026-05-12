@@ -6,6 +6,7 @@
 import { SymptomLog, PatternAlert, AskBloomMessage } from '../types';
 import { conditionLibrary } from '../data/conditions';
 import { supabase } from '../lib/supabase';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // ---- Emergency Detection (expanded keyword list) ----
 const EMERGENCY_KEYWORDS = [
@@ -29,9 +30,40 @@ export function checkEmergencySymptoms(symptoms: string[]): { isEmergency: boole
   };
 }
 
-// ---- Real AI call via Supabase Edge Function ----
+// ---- Real AI call via Supabase Edge Function or Direct Gemini ----
 export async function askBloomAI(userMessage: string): Promise<AskBloomMessage> {
   try {
+    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (geminiKey) {
+      // Local emergency check
+      const emergencyCheck = checkEmergencySymptoms([userMessage]);
+      if (emergencyCheck) {
+        return {
+          id: `bloom-${Date.now()}`,
+          role: 'assistant',
+          content: emergencyCheck.message,
+          timestamp: new Date().toISOString(),
+          isEmergency: true,
+        };
+      }
+
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const prompt = `You are Bloom, an AI assistant for women's health tracking. Answer the following query empathetically and accurately. Remind the user you are an AI, not a doctor. User query: ${userMessage}`;
+      
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+
+      return {
+        id: `bloom-${Date.now()}`,
+        role: 'assistant',
+        content: text,
+        timestamp: new Date().toISOString(),
+        isEmergency: false,
+        disclaimer: 'This is not medical advice or diagnosis. Always consult a healthcare professional.',
+      };
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
 
