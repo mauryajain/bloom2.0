@@ -1,7 +1,41 @@
-// Step 4 — Diagnosed Conditions & Family History
 import type { OnboardingData } from '../../../types';
 interface Props { data: OnboardingData; onUpdate: (u: Partial<OnboardingData>) => void; onNext: () => void; onBack: () => void; }
 const CONDITIONS = ['Endometriosis','PCOS (Polycystic Ovary Syndrome)','Fibroids (Uterine)','Adenomyosis','PMDD','Hypothyroidism','Hyperthyroidism','Iron Deficiency Anemia','Vulvodynia','Fibromyalgia','Lupus','Rheumatoid Arthritis','Breast Cancer','Ovarian Cancer','Cervical Cancer','Osteoporosis','Cardiovascular Disease','Type 2 Diabetes','Depression','Anxiety Disorder'];
+
+const TOOLTIPS: Record<string, string> = {
+  'Endometriosis': 'Tissue similar to uterus lining grows outside the uterus, causing pain and sometimes fertility issues.',
+  'PCOS (Polycystic Ovary Syndrome)': 'A hormonal imbalance causing irregular periods, excess hair growth, acne, and metabolic changes.',
+  'Fibroids (Uterine)': 'Noncancerous growths in the uterus that can cause heavy bleeding, pressure, and discomfort.',
+  'Adenomyosis': 'Uterus lining grows into the muscular wall, leading to heavy, painful periods and an enlarged uterus.',
+  'PMDD': 'A severe form of PMS causing extreme mood swings, irritability, and depression before each period.',
+  'Hypothyroidism': 'An underactive thyroid that slows your metabolism, causing fatigue, weight gain, and cold sensitivity.',
+  'Hyperthyroidism': 'An overactive thyroid that speeds up your metabolism, causing weight loss, anxiety, and rapid heartbeat.',
+  'Iron Deficiency Anemia': 'Low iron levels in your blood, leaving you exhausted, pale, dizzy, and short of breath.',
+  'Vulvodynia': 'Chronic pain or burning in the vulvar area lasting 3+ months with no identifiable cause.',
+  'Fibromyalgia': 'Widespread muscle pain accompanied by fatigue, brain fog, poor sleep, and tender points.',
+  'Lupus': 'An autoimmune condition where the immune system attacks healthy tissues, causing joint pain, rash, and fatigue.',
+  'Rheumatoid Arthritis': 'An autoimmune condition causing painful, swollen joints, often in hands and feet symmetrically.',
+  'Breast Cancer': 'Uncontrolled growth of abnormal cells in breast tissue that can form a lump or spread.',
+  'Ovarian Cancer': 'Abnormal cell growth in the ovaries, often detected at later stages due to vague symptoms.',
+  'Cervical Cancer': 'Abnormal cell growth in the cervix, often linked to HPV, detectable through regular screenings.',
+  'Osteoporosis': 'Bones become weak and brittle, making them fracture easily — often called "brittle bone disease."',
+  'Cardiovascular Disease': 'A group of heart and blood vessel conditions including heart attacks, strokes, and high blood pressure.',
+  'Type 2 Diabetes': 'The body becomes resistant to insulin, causing high blood sugar that affects energy and organ health.',
+  'Depression': 'A mental health condition marked by persistent sadness, loss of interest, low energy, and hopelessness lasting weeks+.',
+  'Anxiety Disorder': 'Excessive, persistent worry or fear that interferes with daily life, often with physical symptoms like rapid heartbeat.',
+};
+
+function Tooltip({ content, children }: { content: string; children: React.ReactNode }) {
+  return (
+    <div className="relative group">
+      {children}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-warm-800 text-white text-[11px] leading-relaxed shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 w-56 text-center">
+        {content}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-warm-800" />
+      </div>
+    </div>
+  );
+}
 
 export default function Step4Conditions({ data, onUpdate, onNext, onBack }: Props) {
   const toggleDiagnosed = (name: string) => {
@@ -14,14 +48,20 @@ export default function Step4Conditions({ data, onUpdate, onNext, onBack }: Prop
     const c = data.familyHistory.filter(x => x !== 'None');
     onUpdate({ familyHistory: c.includes(name) ? c.filter(x => x !== name) : [...c, name] });
   };
-  const Pill = ({ label, selected, color, onClick }: { label: string; selected: boolean; color: string; onClick: () => void }) => (
-    <button onClick={onClick} className={`p-2.5 rounded-xl text-left text-xs transition-all border-2 ${selected ? `border-${color}-400 bg-${color}-50 font-semibold` : 'border-transparent bg-white/60 hover:border-warm-200'}`}>
-      {selected ? '✓ ' : ''}{label}
-    </button>
-  );
+  const Pill = ({ label, selected, color, onClick }: { label: string; selected: boolean; color: string; onClick: () => void }) => {
+    const isNone = label.startsWith('None');
+    return (
+      <button onClick={onClick} className={`p-2.5 rounded-xl text-left text-xs transition-all border-2 ${selected ? `border-${color}-400 bg-${color}-50 font-semibold` : 'border-transparent bg-white/60 hover:border-warm-200'}`}>
+        {selected ? '✓ ' : ''}
+        {isNone ? label : (
+          <Tooltip content={TOOLTIPS[label] || ''}>{label}</Tooltip>
+        )}
+      </button>
+    );
+  };
   return (
     <div className="space-y-6">
-      <div><h3 className="text-xl font-bold mb-1">Conditions & family history</h3><p className="text-warm-400 text-sm">Optional — select only what you're comfortable sharing.</p></div>
+      <div><h3 className="text-xl font-bold mb-1">Conditions & family history</h3><p className="text-warm-400 text-sm">Optional — select only what you're comfortable sharing. Hover over any condition to learn more.</p></div>
       <div>
         <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2 block">Diagnosed conditions</label>
         <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
