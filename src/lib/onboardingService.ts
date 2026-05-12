@@ -7,6 +7,17 @@ import { supabase } from './supabase';
 import type { OnboardingData } from '../types';
 
 export async function submitOnboarding(userId: string, data: OnboardingData): Promise<void> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const sessionUserId = sessionData.session?.user.id;
+
+  if (sessionError || !sessionUserId) {
+    throw new Error('You are not signed in with an active Supabase session. Please log out, log back in, then finish onboarding.');
+  }
+
+  if (sessionUserId !== userId) {
+    throw new Error('Your local session does not match your Supabase login. Please log out and log back in.');
+  }
+
   // Calculate age and minor flag
   const dob = new Date(data.dateOfBirth);
   const age = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
@@ -34,6 +45,7 @@ export async function submitOnboarding(userId: string, data: OnboardingData): Pr
       pronouns: data.pronouns,
       life_stage: data.lifeStage,
       cycle_status: data.cycleStatus,
+      cycle_length: data.cycleLength,
       symptom_duration: data.symptomDuration,
       dismissal_history: data.dismissalHistory,
       urgency_score: data.urgencyScore,

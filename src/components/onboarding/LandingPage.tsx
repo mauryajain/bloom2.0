@@ -39,6 +39,14 @@ export default function LandingPage() {
     if ('message' in result) {
       setError(result.message);
     } else {
+      if (!result.hasSession) {
+        setError('Account created. Please confirm your email, then log in to finish onboarding.');
+        setTab('login');
+        setPassword('');
+        setConfirmPassword('');
+        setLoading(false);
+        return;
+      }
       await loginAsReal(result.userId, email);
       navigate('/onboarding');
     }

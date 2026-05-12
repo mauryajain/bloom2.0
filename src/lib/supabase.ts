@@ -52,6 +52,7 @@ export type Tables = {
     pronouns: string;
     life_stage: string;
     cycle_status: string;
+    cycle_length: number;
     symptom_duration: string;
     dismissal_history: string[];
     urgency_score: number;

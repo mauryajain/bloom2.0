@@ -14,7 +14,7 @@ const toSeverity = (value: unknown): Severity => {
   return severity >= 1 && severity <= 5 ? severity as Severity : 3;
 };
 
-export async function signUp(email: string, password: string, name?: string): Promise<{ userId: string } | AuthError> {
+export async function signUp(email: string, password: string, name?: string): Promise<{ userId: string; hasSession: boolean } | AuthError> {
   if (!isSupabaseConfigured) return { message: 'Supabase is not configured. See SETUP.md to add your credentials and enable real auth.' };
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -23,7 +23,7 @@ export async function signUp(email: string, password: string, name?: string): Pr
   });
   if (error) return { message: error.message };
   if (!data.user) return { message: 'Signup failed — no user returned.' };
-  return { userId: data.user.id };
+  return { userId: data.user.id, hasSession: !!data.session };
 }
 
 export async function signIn(email: string, password: string): Promise<{ userId: string } | AuthError> {
@@ -75,7 +75,7 @@ export async function loadUserProfile(userId: string) {
     pronouns: profile.pronouns ?? '',
     lifeStage: profile.life_stage ?? 'reproductive',
     cycleStatus: profile.cycle_status ?? '',
-    cycleLength: 28,
+    cycleLength: profile.cycle_length ?? 28,
     symptoms: symptoms.map((s: { symptom_name: string }) => s.symptom_name),
     symptomDuration: profile.symptom_duration ?? '',
     dismissalHistory: profile.dismissal_history ?? [],

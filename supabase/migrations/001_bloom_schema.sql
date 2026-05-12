@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
   pronouns TEXT,
   life_stage TEXT,
   cycle_status TEXT,
+  cycle_length INTEGER NOT NULL DEFAULT 28 CHECK (cycle_length BETWEEN 15 AND 90),
   symptom_duration TEXT,
   dismissal_history TEXT[] DEFAULT '{}',
   urgency_score INTEGER CHECK (urgency_score BETWEEN 1 AND 5),

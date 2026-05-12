@@ -5,8 +5,7 @@
 
 import { useBloomStore } from '../../store/useBloomStore';
 import { lifeStages } from '../../data/lifeStages';
-import { Settings, User, Bell, Shield, Palette } from 'lucide-react';
-import type { LifeStage } from '../../types';
+import { Settings, User, Bell, Shield, Palette, Stethoscope } from 'lucide-react';
 
 export default function SettingsPage() {
   const { currentUser, userProfile } = useBloomStore();
@@ -19,6 +18,9 @@ export default function SettingsPage() {
     age: currentUser.age || userProfile?.age || '',
     lifeStage: currentUser.lifeStage || userProfile?.lifeStage,
     cycleLength: currentUser.cycleLength || userProfile?.cycleLength || 28,
+    communicationStyle: userProfile?.communicationStyle || 'balanced',
+    reminderPreferences: userProfile?.reminderPreferences || [],
+    hasDoctor: userProfile?.hasDoctor ?? false,
   };
 
   return (
@@ -60,6 +62,10 @@ export default function SettingsPage() {
             <label className="text-xs font-medium text-warm-500 mb-1 block">Avg Cycle Length</label>
             <input className="bloom-input" value={`${profile.cycleLength} days`} readOnly />
           </div>
+          <div>
+            <label className="text-xs font-medium text-warm-500 mb-1 block">Communication Style</label>
+            <input className="bloom-input capitalize" value={profile.communicationStyle} readOnly />
+          </div>
         </div>
         <p className="text-xs text-warm-400 italic">Profile editing is disabled in demo mode.</p>
       </div>
@@ -71,11 +77,18 @@ export default function SettingsPage() {
           <label className="flex items-center justify-between p-3 rounded-xl bg-warm-50">
             <div className="flex items-center gap-2">
               <Bell size={16} className="text-bloom-500" />
-              <span className="text-sm">Push Notifications</span>
+              <span className="text-sm">Reminder Preferences</span>
             </div>
-            <div className="w-10 h-6 bg-bloom-500 rounded-full relative cursor-pointer">
-              <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow" />
+            <span className="text-xs text-warm-500 text-right max-w-xs">
+              {profile.reminderPreferences.length > 0 ? profile.reminderPreferences.join(', ') : 'None selected'}
+            </span>
+          </label>
+          <label className="flex items-center justify-between p-3 rounded-xl bg-warm-50">
+            <div className="flex items-center gap-2">
+              <Stethoscope size={16} className="text-bloom-500" />
+              <span className="text-sm">Regular Doctor</span>
             </div>
+            <span className="text-xs text-warm-500">{profile.hasDoctor ? 'Yes' : 'Not currently'}</span>
           </label>
           <label className="flex items-center justify-between p-3 rounded-xl bg-warm-50">
             <div className="flex items-center gap-2">
