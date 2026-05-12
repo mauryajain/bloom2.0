@@ -110,6 +110,11 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes waveform {
+  0% { height: 15%; }
+  100% { height: 95%; }
+}
+
 /* ---- Base Styles ---- */
 * {
   box-sizing: border-box;

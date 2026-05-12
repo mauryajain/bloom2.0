@@ -3,12 +3,37 @@
 // ============================================================
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import CryptoJS from 'crypto-js';
 import type { User, UserProfile, SymptomLog, PatternAlert, AskBloomConversation, DoctorPrepReport, OnboardingData, QuestionnaireData } from '../types';
 import { demoUsers } from '../data/demoData';
 import { loadUserProfile, loadSymptomLogs } from '../lib/authService';
 import { submitOnboarding as submitOnboardingToDB } from '../lib/onboardingService';
 import { detectPatterns } from '../utils/aiEngine';
+
+const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'bloom-secure-storage-key';
+
+const encryptedStorage = {
+  getItem: (name: string): string | null => {
+    const data = localStorage.getItem(name);
+    if (!data) return null;
+    try {
+      const bytes = CryptoJS.AES.decrypt(data, ENCRYPTION_KEY);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      // Fallback for unencrypted legacy data
+      return decrypted ? decrypted : data;
+    } catch {
+      return data;
+    }
+  },
+  setItem: (name: string, value: string): void => {
+    const encrypted = CryptoJS.AES.encrypt(value, ENCRYPTION_KEY).toString();
+    localStorage.setItem(name, encrypted);
+  },
+  removeItem: (name: string): void => {
+    localStorage.removeItem(name);
+  }
+};
 
 const DOCTOR_PREP_MIN_LOG_DAYS = 21;
 const DOCTOR_PREP_REFRESH_DAYS = 15;
@@ -141,6 +166,8 @@ interface BloomState {
   sidebarOpen: boolean;
   currentView: string;
   onboardingComplete: boolean;
+  showStageGuide: boolean;
+  seenStageGuides: string[];
 
   // Auth Actions
   loginAsDemo: (userId: string) => void;
@@ -153,6 +180,7 @@ interface BloomState {
   setOnboardingComplete: (complete: boolean) => void;
   saveQuestionnaire: (data: QuestionnaireData) => Promise<void>;
   skipQuestionnaire: () => void;
+  dismissStageGuide: () => void;
 
   // Data Actions
   addSymptomLog: (log: SymptomLog) => void;
@@ -182,45 +210,27 @@ export const useBloomStore = create<BloomState>()(
       sidebarOpen: false,
       currentView: 'dashboard',
       onboardingComplete: false,
+      showStageGuide: false,
+      seenStageGuides: [],
 
       // ---- Auth ----
 
       loginAsDemo: (userId) => {
         const demo = demoUsers.find(d => d.user.id === userId);
         if (demo) {
-          // Build a minimal UserProfile from demo user for AI compatibility
-          const demoProfile: UserProfile = {
-            userId: demo.user.id,
-            nickname: demo.user.name.split(' ')[0],
-            dateOfBirth: '',
-            age: demo.user.age,
-            pronouns: 'she/her',
-            lifeStage: demo.user.lifeStage,
-            cycleStatus: 'regular',
-            cycleLength: demo.user.cycleLength,
-            symptoms: demo.symptomLogs[0]?.symptoms.map(s => s.name) ?? [],
-            symptomDuration: '3-12 months',
-            dismissalHistory: [],
-            diagnosedConditions: [],
-            familyHistory: [],
-            goals: ['understand my body', 'prepare for doctor visits'],
-            urgencyScore: 3,
-            communicationStyle: 'balanced',
-            reminderPreferences: [],
-            hasDoctor: true,
-            isMinor: false,
-            onboardingComplete: true,
-          };
+          const { seenStageGuides } = get();
           set({
             isAuthenticated: true,
             currentUser: demo.user,
-            userProfile: demoProfile,
+            userProfile: demo.profile,
             isDemoMode: true,
             symptomLogs: demo.symptomLogs,
             patterns: demo.patterns,
             conversations: demo.conversations,
             doctorPrep: demo.doctorPrep,
             onboardingComplete: true,
+            showStageGuide: !seenStageGuides.includes(demo.user.lifeStage),
+            currentView: 'dashboard',
             authLoading: false,
           });
         }
@@ -258,6 +268,16 @@ export const useBloomStore = create<BloomState>()(
             ? buildDoctorPrepReport(user, logs, detectedPatterns)
             : existingDoctorPrep;
 
+          const currentConversations = get().conversations || [];
+          const hasUserConv = currentConversations.some(c => c.userId === userId);
+          const newConversations = hasUserConv ? currentConversations : (mergedProfile ? [...currentConversations, {
+            id: `conv-${userId}`,
+            userId,
+            topic: 'Your health journey',
+            messages: [],
+            createdAt: new Date().toISOString(),
+          }] : currentConversations);
+
           set({
             isAuthenticated: true,
             currentUser: user,
@@ -265,13 +285,7 @@ export const useBloomStore = create<BloomState>()(
             isDemoMode: false,
             symptomLogs: logs,
             patterns: detectedPatterns,
-            conversations: mergedProfile ? [{
-              id: `conv-${userId}`,
-              userId,
-              topic: 'Your health journey',
-              messages: [],
-              createdAt: new Date().toISOString(),
-            }] : [],
+            conversations: newConversations,
             doctorPrep,
             onboardingComplete: mergedProfile?.onboardingComplete ?? false,
             authLoading: false,
@@ -282,18 +296,18 @@ export const useBloomStore = create<BloomState>()(
         }
       },
 
-      logout: () => set({
+      logout: () => set((s) => ({
         isAuthenticated: false,
         currentUser: null,
         userProfile: null,
         isDemoMode: false,
         symptomLogs: [],
         patterns: [],
-        conversations: [],
+        conversations: s.conversations, // Preserve conversations for all users across logouts
         doctorPrep: null,
         onboardingComplete: false,
         currentView: 'dashboard',
-      }),
+      })),
 
       setAuthLoading: (loading) => set({ authLoading: loading }),
 
@@ -333,19 +347,24 @@ export const useBloomStore = create<BloomState>()(
         const { currentUser } = get();
         saveCachedProfile({ ...profile, email: currentUser?.email ?? '' });
 
+        const currentConversations = get().conversations || [];
+        const hasUserConv = currentConversations.some(c => c.userId === userId);
+        const newConversations = hasUserConv ? currentConversations : [...currentConversations, {
+          id: `conv-${userId}`,
+          userId,
+          topic: 'Your health journey',
+          messages: [],
+          createdAt: new Date().toISOString(),
+        }];
+
         set({
           userProfile: profile,
           onboardingComplete: true,
+          showStageGuide: !get().seenStageGuides.includes(data.lifeStage),
           currentUser: currentUser
             ? { ...currentUser, name: data.nickname, age, lifeStage: data.lifeStage as User['lifeStage'], cycleLength: data.cycleLength }
             : currentUser,
-          conversations: [{
-            id: `conv-${userId}`,
-            userId,
-            topic: 'Your health journey',
-            messages: [],
-            createdAt: new Date().toISOString(),
-          }],
+          conversations: newConversations,
         });
       },
 
@@ -354,6 +373,15 @@ export const useBloomStore = create<BloomState>()(
         set({ onboardingComplete: true });
       },
       skipQuestionnaire: () => set({ onboardingComplete: true }),
+      dismissStageGuide: () => {
+        const stage = get().currentUser?.lifeStage;
+        set(s => ({
+          showStageGuide: false,
+          seenStageGuides: stage && !s.seenStageGuides.includes(stage)
+            ? [...s.seenStageGuides, stage]
+            : s.seenStageGuides,
+        }));
+      },
 
       // ---- Data ----
 
@@ -400,18 +428,20 @@ export const useBloomStore = create<BloomState>()(
     }),
     {
       name: 'bloom-session',
-      // Only persist auth state + view, not large data arrays (those are re-fetched from Supabase)
+      storage: createJSONStorage(() => encryptedStorage),
       partialize: (s) => ({
         isAuthenticated: s.isAuthenticated,
         currentUser: s.currentUser,
         userProfile: s.userProfile,
         isDemoMode: s.isDemoMode,
         onboardingComplete: s.onboardingComplete,
+        seenStageGuides: s.seenStageGuides,
         currentView: s.currentView,
         // Demo users persist their data (no DB to re-fetch from)
         symptomLogs: s.isDemoMode ? s.symptomLogs : [],
         patterns: s.isDemoMode ? s.patterns : [],
-        conversations: s.isDemoMode ? s.conversations : [],
+        // ALWAYS persist conversations locally so users can see previous chats (encrypted!)
+        conversations: s.conversations,
         doctorPrep: s.doctorPrep,
       }),
     }

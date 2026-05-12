@@ -9,8 +9,9 @@ import { SymptomLog, SymptomEntry, Severity } from '../../types';
 import { format, parseISO, subDays } from 'date-fns';
 import {
   Plus, Calendar, ChevronDown, ChevronUp, Search,
-  Flame, CloudRain, Heart, Brain, Moon, Utensils, Eye
+  Flame, CloudRain, Heart, Brain, Moon, Utensils, Eye, Mic, TrendingUp
 } from 'lucide-react';
+import VoiceSymptomLogger from './VoiceSymptomLogger';
 
 const SYMPTOM_PRESETS = [
   { name: 'Cramps', category: 'pain' as const, icon: '🔥' },
@@ -38,9 +39,91 @@ const MOODS = ['Happy', 'Calm', 'Anxious', 'Sad', 'Irritable', 'Overwhelmed', 'C
 const severityLabels = ['', 'Minimal', 'Mild', 'Moderate', 'Severe', 'Extreme'];
 const severityColors = ['', '#22c55e', '#84cc16', '#f59e0b', '#f97316', '#ef4444'];
 
+function SymptomHeatmap({ logs }: { logs: SymptomLog[] }) {
+  const days = Array.from({ length: 90 }, (_, index) => {
+    const date = subDays(new Date(), 89 - index);
+    const dateKey = format(date, 'yyyy-MM-dd');
+    const log = logs.find(entry => entry.date === dateKey);
+    const severity = log && log.symptoms.length > 0
+      ? log.symptoms.reduce((sum, symptom) => sum + symptom.severity, 0) / log.symptoms.length
+      : 0;
+
+    return {
+      date,
+      dateKey,
+      severity,
+      hasSymptoms: Boolean(log && log.symptoms.length > 0),
+    };
+  });
+
+  const loggedDays = days.filter(day => day.hasSymptoms).length;
+  const logsByDate = new Set(logs.filter(log => log.symptoms.length > 0).map(log => log.date));
+  let currentStreak = 0;
+
+  for (let index = 0; index < 90; index += 1) {
+    const dateKey = format(subDays(new Date(), index), 'yyyy-MM-dd');
+    if (!logsByDate.has(dateKey)) break;
+    currentStreak += 1;
+  }
+
+  const monthCutoff = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  const symptomCounts = new Map<string, number>();
+  logs
+    .filter(log => log.date >= monthCutoff)
+    .forEach(log => {
+      log.symptoms.forEach(symptom => {
+        symptomCounts.set(symptom.name, (symptomCounts.get(symptom.name) ?? 0) + 1);
+      });
+    });
+  const mostLoggedSymptom = [...symptomCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'No symptoms yet';
+
+  const severityClass = (severity: number) => {
+    if (severity === 0) return 'bg-warm-100';
+    if (severity <= 2) return 'bg-bloom-100';
+    if (severity <= 3) return 'bg-bloom-300';
+    if (severity <= 4) return 'bg-bloom-500';
+    return 'bg-rose-400';
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-full bg-bloom-50 border border-bloom-100 px-3 py-1 text-xs text-bloom-700">
+          {loggedDays} days logged
+        </span>
+        <span className="rounded-full bg-bloom-50 border border-bloom-100 px-3 py-1 text-xs text-bloom-700">
+          {currentStreak} day streak
+        </span>
+        <span className="rounded-full bg-bloom-50 border border-bloom-100 px-3 py-1 text-xs text-bloom-700">
+          Top this month: {mostLoggedSymptom}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-13 grid-rows-7 gap-[2px] w-fit">
+        {days.map(day => (
+          <div
+            key={day.dateKey}
+            className={`w-[10px] h-[10px] rounded-sm ${severityClass(day.severity)}`}
+            title={`${format(day.date, 'MMM dd, yyyy')}: ${day.severity > 0 ? `Avg severity ${day.severity.toFixed(1)}` : 'No log'}`}
+          />
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 text-xs text-warm-400">
+        <span>Less</span>
+        {['bg-warm-100', 'bg-bloom-100', 'bg-bloom-300', 'bg-bloom-500', 'bg-rose-400'].map(color => (
+          <span key={color} className={`w-[10px] h-[10px] rounded-sm ${color}`} />
+        ))}
+        <span>More</span>
+      </div>
+    </div>
+  );
+}
+
 export default function SymptomJournal() {
   const { symptomLogs, addSymptomLog, currentUser, isDemoMode } = useBloomStore();
   const [showLogger, setShowLogger] = useState(false);
+  const [showVoiceLogger, setShowVoiceLogger] = useState(false);
   const [selectedSymptoms, setSelectedSymptoms] = useState<{ name: string; category: string; severity: Severity }[]>([]);
   const [mood, setMood] = useState('');
   const [energy, setEnergy] = useState(5);
@@ -142,10 +225,27 @@ export default function SymptomJournal() {
           <h1 className="text-2xl font-bold font-[var(--font-display)]">Symptom Journal</h1>
           <p className="text-warm-400 text-sm mt-1">Track your daily symptoms, mood, and energy</p>
         </div>
-        <button className="btn-bloom flex items-center gap-2" onClick={() => setShowLogger(!showLogger)}>
-          <Plus size={16} /> Log Symptoms
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="relative group px-4 py-2.5 rounded-xl bg-gradient-to-br from-rose-400 to-bloom-500 text-white font-medium text-sm flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 transition-all"
+            onClick={() => { setShowVoiceLogger(!showVoiceLogger); setShowLogger(false); }}
+          >
+            <Mic size={16} /> Voice Log
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse" />
+          </button>
+          <button className="btn-bloom flex items-center gap-2" onClick={() => { setShowLogger(!showLogger); setShowVoiceLogger(false); }}>
+            <Plus size={16} /> Log Symptoms
+          </button>
+        </div>
       </div>
+
+      {/* Voice Logger */}
+      {showVoiceLogger && (
+        <VoiceSymptomLogger
+          onClose={() => setShowVoiceLogger(false)}
+          onLogged={() => setShowVoiceLogger(false)}
+        />
+      )}
 
       {/* Logger Modal */}
       {showLogger && (
@@ -275,34 +375,10 @@ export default function SymptomJournal() {
 
       {/* Heatmap */}
       <div className="glass-card p-5">
-        <h3 className="font-semibold mb-3">Symptom Heatmap (30 Days)</h3>
-        <div className="flex flex-wrap gap-1">
-          {Array.from({ length: 30 }, (_, i) => {
-            const d = format(subDays(new Date(), 29 - i), 'yyyy-MM-dd');
-            const log = symptomLogs.find(l => l.date === d);
-            const avg = log && log.symptoms.length > 0
-              ? log.symptoms.reduce((a, s) => a + s.severity, 0) / log.symptoms.length
-              : 0;
-            const opacity = avg / 5;
-            return (
-              <div
-                key={i}
-                className="heatmap-cell tooltip"
-                data-tooltip={`${format(subDays(new Date(), 29 - i), 'MMM dd')}: ${avg > 0 ? `Avg ${avg.toFixed(1)}` : 'No data'}`}
-                style={{
-                  background: avg > 0 ? `rgba(168,85,247,${0.2 + opacity * 0.8})` : '#f5f5f4',
-                }}
-              />
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-2 mt-2 text-[10px] text-warm-400">
-          <span>Less</span>
-          {[0.2, 0.4, 0.6, 0.8, 1].map(o => (
-            <div key={o} className="w-3 h-3 rounded-sm" style={{ background: `rgba(168,85,247,${o})` }} />
-          ))}
-          <span>More</span>
-        </div>
+        <h3 className="font-semibold mb-3 flex items-center gap-2">
+          <TrendingUp size={16} className="text-bloom-500" /> 90-Day Overview
+        </h3>
+        <SymptomHeatmap logs={symptomLogs} />
       </div>
 
       {/* Log History */}

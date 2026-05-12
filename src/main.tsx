@@ -5,7 +5,7 @@
 
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import './index.css';
 import App from './App.tsx';
 import { supabase, isSupabaseConfigured } from './lib/supabase.ts';
@@ -51,8 +51,8 @@ function Root() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter basename="/bloom2.0">
+    <HashRouter>
       <Root />
-    </BrowserRouter>
+    </HashRouter>
   </StrictMode>
 );

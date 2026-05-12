@@ -8,15 +8,17 @@ import { useNavigate } from 'react-router-dom';
 import { signOut } from '../../lib/authService';
 import {
   LayoutDashboard, BookHeart, Brain, FileText,
-  Library, Flower2, Settings, LogOut, Menu, X, Bell
+  Library, Flower2, Settings, LogOut, Menu, X, Bell, MapPin, Scale
 } from 'lucide-react';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'timeline', label: 'My Journey', icon: MapPin },
   { id: 'journal', label: 'Symptom Journal', icon: BookHeart },
   { id: 'ask-bloom', label: 'Ask Bloom', icon: Brain },
   { id: 'doctor-prep', label: 'Doctor Prep', icon: FileText },
   { id: 'conditions', label: 'Condition Library', icon: Library },
+  { id: 'normal-vs-not', label: "What's Normal?", icon: Scale },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -72,17 +74,29 @@ export default function Sidebar() {
 
         {/* User card */}
         {currentUser && (
-          <div className="mx-4 mb-4 p-3 rounded-xl bg-bloom-50/80 border border-bloom-100">
-            <p className="font-semibold text-sm text-warm-800">{currentUser.name}</p>
-            <p className="text-xs text-warm-400 capitalize">
-              {currentUser.lifeStage ? currentUser.lifeStage.replace('-', ' ') : 'Member'}
-              {currentUser.age ? ` · Age ${currentUser.age}` : ''}
-            </p>
+          <div className="mx-4 mb-4 p-3 rounded-xl bg-bloom-50/80 border border-bloom-100 space-y-3">
+            <div>
+              <p className="font-semibold text-sm text-warm-800">{currentUser.name}</p>
+              <p className="text-xs text-warm-400 capitalize">
+                {currentUser.lifeStage ? currentUser.lifeStage.replace('-', ' ') : 'Member'}
+                {currentUser.age ? ` · Age ${currentUser.age}` : ''}
+              </p>
+            </div>
+            {isDemoMode && (
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-white/80 px-3 py-2 text-xs font-medium text-bloom-600 hover:bg-white"
+                onClick={handleSignOut}
+              >
+                <LogOut size={14} />
+                Back to demo login
+              </button>
+            )}
           </div>
         )}
 
         {/* Nav */}
-        <nav className="flex-1 px-3 space-y-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 space-y-1 pb-3">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
