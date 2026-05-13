@@ -71,7 +71,7 @@ Say *"I've had really bad cramps today, my energy is about a 3, and I didn't sle
 ### 🤖 Ask Bloom — AI Health Guide
 A conversational AI assistant built on Gemini 1.5 Flash, system-prompted with the user's full profile: name, age, life stage, diagnosed conditions, family history, goals, communication style preference, and minor-safe mode for users under 18. Ask Bloom answers questions with reference to your specific data, cites research, and always concludes with *"Questions to ask your doctor."* It never diagnoses — it frames every response as pattern observation and conversation preparation.
 
-Real-time symptom trend mini-chart and noticeable patterns are surfaced above the chat input as context.
+Real-time symptom trend mini-chart and noticeable patterns are surfaced above the chat input as context. Ask Bloom also supports live voice chat: users can speak questions through the browser microphone and optionally hear spoken AI replies.
 
 ---
 
@@ -203,7 +203,7 @@ Fallback: Locally-generated responses
 | Icons | Lucide React |
 | PDF Export | @react-pdf/renderer |
 | Speech-to-Text | Web Speech API (browser native) |
-| Deployment | Vercel (frontend) / Railway (backend) / GitHub Pages |
+| Deployment | GitHub Pages |
 
 ---
 
@@ -329,9 +329,13 @@ Open [http://localhost:5173](http://localhost:5173).
 ### 5. Try demo mode (no credentials needed)
 
 On the landing page, click **Try Demo** to explore with pre-loaded 90-day profiles:
-- **Sarah** — Reproductive years, endometriosis-pattern symptoms
-- **Aisha** — Perimenopause, hormone transition tracking
-- **Priya** — Postpartum recovery
+- **Mia** — Puberty
+- **Sarah** — Reproductive years
+- **Elena** — Pregnancy
+- **Noor** — Postpartum
+- **Priya** — Perimenopause
+- **Grace** — Menopause
+- **Lata** — Post-menopause
 
 ### Deploy
 
