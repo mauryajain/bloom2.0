@@ -421,8 +421,6 @@ Debilitating period pain since menarche. Told it's normal. No baseline for what 
 
 **Team Voldemort** — HopeWorks · AI4India · Hackathon 2025
 
-| Member |
-|---|---|
 | Maurya Jain |
 | Manthan Sharma |
 | Khushi Hirawat |
