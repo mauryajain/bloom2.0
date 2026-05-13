@@ -125,11 +125,79 @@ export default function Sidebar() {
       </button>
 
       {sidebarOpen && (
-        <div
-          className="mobile-nav-bar fixed inset-0 z-30"
-          style={{ background: 'rgba(10, 6, 18, 0.6)', backdropFilter: 'blur(4px)' }}
-          onClick={() => setSidebarOpen(false)}
-        />
+        <>
+          <div
+            className="mobile-nav-bar fixed inset-0 z-30"
+            style={{ background: 'rgba(10, 6, 18, 0.42)' }}
+            onClick={() => setSidebarOpen(false)}
+          />
+
+          <aside
+            className="mobile-nav-bar fixed left-4 right-4 top-20 z-40 overflow-y-auto rounded-2xl p-3"
+            style={{
+              maxHeight: 'calc(100vh - 160px)',
+              background: 'var(--bloom-deep)',
+              border: '1px solid var(--bloom-border)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.36)',
+            }}
+            aria-label="Mobile navigation"
+          >
+            <div className="mb-3 flex items-center gap-3 px-2">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+                style={{
+                  background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))',
+                  color: 'white',
+                }}
+              >
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold" style={{ color: 'var(--bloom-text)' }}>
+                  {currentUser?.name || 'Bloom'}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--bloom-muted)' }}>
+                  {isDemoMode ? 'Demo profile' : 'Signed in'}
+                </p>
+              </div>
+            </div>
+
+            <nav className="grid gap-2">
+              {navItems.map(item => {
+                const isActive = currentView === item.id;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all"
+                    style={{
+                      background: isActive ? 'var(--bloom-lift)' : 'transparent',
+                      border: `1px solid ${isActive ? 'var(--bloom-border)' : 'transparent'}`,
+                      color: isActive ? 'var(--bloom-text)' : 'var(--bloom-muted)',
+                    }}
+                    onClick={() => { setCurrentView(item.id); setSidebarOpen(false); }}
+                  >
+                    <Icon size={18} style={{ color: isActive ? 'var(--bloom-glow)' : 'var(--bloom-muted)' }} />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            <button
+              className="mt-3 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all"
+              style={{
+                background: 'rgba(232, 121, 160, 0.08)',
+                border: '1px solid rgba(232, 121, 160, 0.18)',
+                color: 'var(--bloom-text)',
+              }}
+              onClick={handleSignOut}
+            >
+              <LogOut size={18} style={{ color: 'var(--bloom-rose)' }} />
+              <span className="text-sm font-medium">Sign Out</span>
+            </button>
+          </aside>
+        </>
       )}
 
       {/* Desktop sidebar */}
