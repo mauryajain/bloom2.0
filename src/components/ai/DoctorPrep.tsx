@@ -4,7 +4,7 @@
 // ============================================================
 
 import { useBloomStore } from '../../store/useBloomStore';
-import { FileText, Download, Calendar, TrendingUp, MessageCircle, Clock, AlertCircle, ShieldCheck, Clipboard } from 'lucide-react';
+import { FileText, Download, Calendar, TrendingUp, MessageCircle, Clock, AlertCircle, ShieldCheck, Clipboard, ClipboardCheck, ListChecks, Stethoscope } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -56,13 +56,22 @@ const medicationPatterns = [
   /\b(ibuprofen|advil|motrin|tylenol|acetaminophen|paracetamol|naproxen|aleve|midol|aspirin)\s+(\d+\s?mg)\b/i,
 ];
 
+type ClinicalShieldResult = {
+  clinicalPhrase: string;
+  structuredNote: string;
+  evidencePoints: string[];
+  missingDetails: string[];
+  visitScript: string;
+  urgencyNote: string;
+};
+
 const estimateSeverity = (text: string) => {
   const numeric = text.match(/\b(10|[1-9])\s*\/\s*10\b/);
   if (numeric) return `${numeric[1]}/10`;
-  if (/\b(unbearable|worst|can't stand|cannot stand|excruciating)\b/i.test(text)) return '9/10';
-  if (/\b(so bad|severe|intense|really bad)\b/i.test(text)) return '8/10';
-  if (/\b(moderate|pretty bad)\b/i.test(text)) return '5-6/10';
-  if (/\b(mild|slight|little)\b/i.test(text)) return '2-3/10';
+  if (/\b(unbearable|worst|can't stand|cannot stand|excruciating)\b/i.test(text)) return 'described as severe or near-intolerable; exact 0-10 rating not documented';
+  if (/\b(so bad|severe|intense|really bad)\b/i.test(text)) return 'described as severe; exact 0-10 rating not documented';
+  if (/\b(moderate|pretty bad)\b/i.test(text)) return 'described as moderate; exact 0-10 rating not documented';
+  if (/\b(mild|slight|little)\b/i.test(text)) return 'described as mild; exact 0-10 rating not documented';
   return 'not quantified';
 };
 
@@ -99,14 +108,69 @@ const extractMedication = (text: string) => {
   return '';
 };
 
-const buildClinicalTranslation = (input: string) => {
+const extractFunctionalImpact = (text: string) => {
+  const impacts = [
+    { pattern: /\b(missed|missing)\s+(work|school|class)\b/i, label: 'missed work/school' },
+    { pattern: /\b(can't|cannot|unable to)\s+(walk|stand|sleep|eat|work|focus|move)\b/i, label: 'interferes with daily functioning' },
+    { pattern: /\b(woke me up|waking me up|can't sleep|cannot sleep)\b/i, label: 'disrupts sleep' },
+    { pattern: /\b(lying down|staying in bed|bedridden)\b/i, label: 'requires rest or lying down' },
+    { pattern: /\b(vomit|vomiting|throwing up)\b/i, label: 'associated with vomiting' },
+  ];
+  return impacts.filter(({ pattern }) => pattern.test(text)).map(({ label }) => label);
+};
+
+const extractAssociatedSymptoms = (text: string) => {
+  const lower = text.toLowerCase();
+  return Object.entries(symptomTerms)
+    .filter(([key]) => lower.includes(key))
+    .map(([, label]) => label)
+    .filter(label => label !== extractLocationOrSymptom(text));
+};
+
+const extractCycleTiming = (text: string) => {
+  if (/\b(period|menstrual|bleeding|flow|cycle day|day \d+)\b/i.test(text)) return 'menstrual/cycle timing mentioned';
+  if (/\bovulation|midcycle|mid-cycle\b/i.test(text)) return 'possible ovulation or mid-cycle timing mentioned';
+  if (/\bbefore my period|pms|premenstrual\b/i.test(text)) return 'premenstrual timing mentioned';
+  return '';
+};
+
+const extractTriggers = (text: string) => {
+  const triggers = [
+    { pattern: /\b(after|during)\s+(sex|intercourse)\b/i, label: 'sex/intercourse' },
+    { pattern: /\b(after|during)\s+(exercise|running|walking|workout)\b/i, label: 'movement or exercise' },
+    { pattern: /\b(after|during)\s+(eating|meals|food)\b/i, label: 'meals or food' },
+    { pattern: /\bwhen\s+(urinating|peeing|pooping|having a bowel movement)\b/i, label: 'urination or bowel movements' },
+  ];
+  return triggers.filter(({ pattern }) => pattern.test(text)).map(({ label }) => label);
+};
+
+const detectUrgencyNote = (text: string) => {
+  const redFlags = [
+    /\b(chest pain|shortness of breath|trouble breathing)\b/i,
+    /\b(fainting|passed out|loss of consciousness)\b/i,
+    /\b(heavy bleeding|soaking.*pad|soaking.*tampon)\b/i,
+    /\b(positive pregnancy test|pregnant)\b/i,
+    /\b(fever|stiff neck)\b/i,
+    /\b(sudden|sharp).*(pelvic|abdominal|chest)\b/i,
+  ];
+  if (redFlags.some(pattern => pattern.test(text))) {
+    return 'This includes details that may need urgent medical advice, especially if symptoms are sudden, severe, worsening, or unusual for you.';
+  }
+  return 'No urgent red-flag wording was detected here, but seek timely medical help for sudden, severe, worsening, or unusual symptoms.';
+};
+
+const buildClinicalShield = (input: string): ClinicalShieldResult | null => {
   const trimmed = input.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return null;
 
   const severity = estimateSeverity(trimmed);
   const duration = extractDuration(trimmed);
   const symptom = extractLocationOrSymptom(trimmed);
   const medication = extractMedication(trimmed);
+  const functionalImpacts = extractFunctionalImpact(trimmed);
+  const associatedSymptoms = extractAssociatedSymptoms(trimmed);
+  const cycleTiming = extractCycleTiming(trimmed);
+  const triggers = extractTriggers(trimmed);
   const unresponsive = /\b(doesn't do anything|does not do anything|not helping|no relief|unresponsive|doesn't help|does not help)\b/i.test(trimmed);
   const persistent = duration !== 'duration not specified' ? 'persistent ' : '';
   const acute = /\b(sudden|started|new|acute)\b/i.test(trimmed) || duration !== 'duration not specified' ? 'acute, ' : '';
@@ -117,7 +181,7 @@ const buildClinicalTranslation = (input: string) => {
   const parts = [
     `Patient reports ${painPhrase}`,
     duration !== 'duration not specified' ? `for ${duration}` : '',
-    severity !== 'not quantified' ? `with reported severity of ${severity} on the numeric pain scale` : 'with severity not yet quantified',
+    severity !== 'not quantified' ? `with severity ${severity}` : 'with severity not yet quantified',
   ].filter(Boolean);
 
   let sentence = `${parts.join(', ')}.`;
@@ -126,14 +190,57 @@ const buildClinicalTranslation = (input: string) => {
   } else {
     sentence += ' Medication response not specified.';
   }
-  sentence += ' Recommend documenting associated symptoms, triggers, menstrual/cycle timing, and functional impact.';
-  return sentence;
+  if (functionalImpacts.length > 0) sentence += ` Functional impact: ${functionalImpacts.join(', ')}.`;
+  if (associatedSymptoms.length > 0) sentence += ` Associated symptoms include ${associatedSymptoms.join(', ')}.`;
+  if (cycleTiming) sentence += ` ${cycleTiming}.`;
+  if (triggers.length > 0) sentence += ` Reported trigger/context: ${triggers.join(', ')}.`;
+
+  const missingDetails = [
+    severity === 'not quantified' || severity.includes('exact 0-10 rating not documented') ? 'Exact severity on a 0-10 scale' : '',
+    duration === 'duration not specified' ? 'When it started and how long each episode lasts' : '',
+    !cycleTiming ? 'Cycle day or relation to period/ovulation, if relevant' : '',
+    medication ? 'Dose timing and amount of relief' : 'Medication, heat, rest, or other relief attempts' ,
+    functionalImpacts.length === 0 ? 'Impact on sleep, work/school, movement, eating, or caregiving' : '',
+    associatedSymptoms.length === 0 ? 'Associated symptoms such as nausea, fever, dizziness, bowel/bladder changes, bleeding, or discharge' : '',
+  ].filter(Boolean);
+
+  const evidencePoints = [
+    `Symptom focus: ${painPhrase}`,
+    duration !== 'duration not specified' ? `Duration: ${duration}` : 'Duration: not yet specified',
+    severity !== 'not quantified' ? `Severity: ${severity}` : 'Severity: not yet quantified',
+    medication ? `Relief attempted: ${medication}${unresponsive ? ' with no relief reported' : ''}` : 'Relief attempted: not yet specified',
+    functionalImpacts.length > 0 ? `Functional impact: ${functionalImpacts.join(', ')}` : 'Functional impact: not yet specified',
+  ];
+
+  const structuredNote = [
+    sentence,
+    '',
+    'Details to confirm:',
+    ...missingDetails.map(detail => `- ${detail}`),
+  ].join('\n');
+
+  const visitScript = [
+    `I am concerned about ${painPhrase}.`,
+    severity !== 'not quantified' ? `I would describe the severity as ${severity}.` : 'I need help quantifying and evaluating the severity.',
+    duration !== 'duration not specified' ? `It has been happening for ${duration}.` : 'I can clarify the start date and episode duration.',
+    medication ? `${medication} ${unresponsive ? 'has not relieved it' : 'is part of what I have tried'}.` : 'I can share what I have tried for relief.',
+    'What would you recommend evaluating next, and what symptoms should prompt urgent care?',
+  ].join(' ');
+
+  return {
+    clinicalPhrase: sentence,
+    structuredNote,
+    evidencePoints,
+    missingDetails,
+    visitScript,
+    urgencyNote: detectUrgencyNote(trimmed),
+  };
 };
 
 export default function DoctorPrep() {
   const { doctorPrep, currentUser, symptomLogs, refreshDoctorPrep } = useBloomStore();
   const [plainLanguage, setPlainLanguage] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copiedTarget, setCopiedTarget] = useState<'note' | 'script' | null>(null);
 
   useEffect(() => {
     refreshDoctorPrep();
@@ -143,8 +250,8 @@ export default function DoctorPrep() {
     symptomLogs.find(log => log.notes.trim().length > 0)?.notes ?? ''
   ), [symptomLogs]);
 
-  const clinicalTranslation = useMemo(
-    () => buildClinicalTranslation(plainLanguage || latestSymptomNote),
+  const clinicalShield = useMemo(
+    () => buildClinicalShield(plainLanguage || latestSymptomNote),
     [plainLanguage, latestSymptomNote]
   );
 
@@ -152,11 +259,11 @@ export default function DoctorPrep() {
     window.print();
   };
 
-  const handleCopyTranslation = async () => {
-    if (!clinicalTranslation) return;
-    await navigator.clipboard.writeText(clinicalTranslation);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+  const handleCopyShield = async (target: 'note' | 'script') => {
+    if (!clinicalShield) return;
+    await navigator.clipboard.writeText(target === 'note' ? clinicalShield.structuredNote : clinicalShield.visitScript);
+    setCopiedTarget(target);
+    window.setTimeout(() => setCopiedTarget(null), 1500);
   };
 
   const clinicalTranslatorPanel = (
@@ -167,16 +274,25 @@ export default function DoctorPrep() {
             <ShieldCheck size={18} className="text-bloom-500" /> Medical Gaslighting Shield
           </h2>
           <p className="text-sm text-warm-400 mt-1">
-            Translate everyday symptom language into objective wording for your clinician.
+            Turn symptom language into a clear note, missing-detail checklist, and appointment script.
           </p>
         </div>
-        <button
-          className="btn-bloom flex items-center gap-2 text-sm"
-          onClick={handleCopyTranslation}
-          disabled={!clinicalTranslation}
-        >
-          <Clipboard size={14} /> {copied ? 'Copied' : 'Copy'}
-        </button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            className="btn-bloom flex items-center gap-2 text-sm"
+            onClick={() => handleCopyShield('note')}
+            disabled={!clinicalShield}
+          >
+            <Clipboard size={14} /> {copiedTarget === 'note' ? 'Copied' : 'Copy note'}
+          </button>
+          <button
+            className="btn-bloom-outline flex items-center gap-2 text-sm px-4"
+            onClick={() => handleCopyShield('script')}
+            disabled={!clinicalShield}
+          >
+            <ClipboardCheck size={14} /> {copiedTarget === 'script' ? 'Copied' : 'Script'}
+          </button>
+        </div>
       </div>
       <textarea
         className="bloom-input min-h-24 resize-none"
@@ -184,14 +300,57 @@ export default function DoctorPrep() {
         onChange={(event) => setPlainLanguage(event.target.value)}
         placeholder={latestSymptomNote || 'Example: My stomach has been hurting so bad for a week and ibuprofen does not help.'}
       />
-      <div className="rounded-xl bg-warm-50 border border-warm-100 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-warm-400 mb-2">Doctor-ready phrasing</p>
-        <p className="text-sm text-warm-700 leading-relaxed">
-          {clinicalTranslation || 'Enter a symptom description to generate clinical phrasing.'}
-        </p>
-      </div>
+      {clinicalShield ? (
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="rounded-xl bg-warm-50 border border-warm-100 p-4 md:col-span-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-warm-400 mb-2 flex items-center gap-2">
+              <Stethoscope size={14} /> Doctor-ready phrasing
+            </p>
+            <p className="text-sm text-warm-700 leading-relaxed">{clinicalShield.clinicalPhrase}</p>
+          </div>
+          <div className="rounded-xl bg-white/70 border border-warm-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-warm-400 mb-3 flex items-center gap-2">
+              <ListChecks size={14} /> Evidence to bring
+            </p>
+            <ul className="space-y-2">
+              {clinicalShield.evidencePoints.map(point => (
+                <li key={point} className="text-xs text-warm-600 leading-relaxed flex gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-bloom-400" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl bg-white/70 border border-warm-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-warm-400 mb-3 flex items-center gap-2">
+              <AlertCircle size={14} /> Missing details
+            </p>
+            <ul className="space-y-2">
+              {clinicalShield.missingDetails.length > 0 ? clinicalShield.missingDetails.map(detail => (
+                <li key={detail} className="text-xs text-warm-600 leading-relaxed flex gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                  <span>{detail}</span>
+                </li>
+              )) : (
+                <li className="text-xs text-warm-600 leading-relaxed">Core symptom details are covered. Bring dates or logs if you have them.</li>
+              )}
+            </ul>
+          </div>
+          <div className="rounded-xl bg-bloom-50 border border-bloom-100 p-4 md:col-span-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-bloom-700 mb-2">Appointment script</p>
+            <p className="text-sm text-warm-700 leading-relaxed">{clinicalShield.visitScript}</p>
+          </div>
+          <div className="rounded-xl bg-amber-50 border border-amber-100 p-3 md:col-span-2">
+            <p className="text-xs text-amber-800 leading-relaxed">{clinicalShield.urgencyNote}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl bg-warm-50 border border-warm-100 p-4">
+          <p className="text-sm text-warm-500">Enter a symptom description to generate clinical phrasing.</p>
+        </div>
+      )}
       <p className="text-xs text-warm-400">
-        This does not diagnose you; it helps describe your experience clearly with duration, severity, medication response, and functional impact.
+        This does not diagnose you; it helps make your symptoms harder to dismiss by separating facts, unknowns, and the question you want answered.
       </p>
     </div>
   );
