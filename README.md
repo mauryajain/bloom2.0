@@ -22,6 +22,8 @@
 ---
 LIVE DEMO LINK: https://ambharat314.github.io/bloom2.0/#/
 
+NOTE: PLEASE ADD YOUR OWN API KEY WHEN USING ASK BLOOM OR ANY AI FEATURES(GO TO THE SETTINGS AND ADD THE API KEY IN THE API KEYS SECTION)
+
 ## The Problem
 
 Women's health has been chronically understudied, underfunded, and undertreated for decades.
