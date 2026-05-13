@@ -4,6 +4,8 @@ import type { User, UserProfile, SymptomLog, PatternAlert, BodyForecast, DayFore
 import { buildSystemPrompt } from '../lib/buildSystemPrompt';
 import { getGeminiKey } from '../lib/geminiKeyManager';
 
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
 function getNextWeekDates(): { weekStart: string; weekEnd: string; dates: string[] } {
   const today = new Date();
   const dates: string[] = [];
@@ -327,7 +329,7 @@ export async function generateBodyForecast(
       const prompt = buildForecastPrompt(user, profile, logs, patterns);
       const genAI = new GoogleGenerativeAI(geminiKey);
       const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: GEMINI_MODEL,
         systemInstruction: 'You are Bloom, a women\'s health forecasting AI. You analyze patterns and predict symptoms. Never diagnose. Always respond with valid JSON only.',
       });
 

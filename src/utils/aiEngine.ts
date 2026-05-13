@@ -10,6 +10,8 @@ import { supabase } from '../lib/supabase';
 import { buildSystemPrompt } from '../lib/buildSystemPrompt';
 import { getGeminiKey } from '../lib/geminiKeyManager';
 
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
 // ---- Emergency Detection (expanded keyword list) ----
 const EMERGENCY_KEYWORDS = [
   'chest pain', "can't breathe", 'cannot breathe', 'difficulty breathing',
@@ -56,7 +58,7 @@ export async function askBloomAI(userMessage: string, profile?: UserProfile | nu
 
       const genAI = new GoogleGenerativeAI(geminiKey);
       const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: GEMINI_MODEL,
         systemInstruction,
       });
 

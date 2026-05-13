@@ -8,6 +8,7 @@ import { askBloomAI, checkEmergencySymptoms } from '../../utils/aiEngine';
 import { ArrowUp, AlertTriangle, Wifi, WifiOff, Activity, TrendingUp, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useVoiceJournal } from '../../hooks/useVoiceJournal';
+import { getGeminiKey, hasCustomGeminiKey } from '../../lib/geminiKeyManager';
 
 function BloomPetalFlower({ size = 36, isTyping = false }: { size?: number; isTyping?: boolean }) {
   const cx = size / 2;
@@ -57,6 +58,8 @@ export default function AskBloom() {
   const [inputFocused, setInputFocused] = useState(false);
   const [sendHovered, setSendHovered] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const hasGeminiKey = !!getGeminiKey();
+  const hasCustomKey = hasCustomGeminiKey();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { voiceState, transcript, error: voiceError, startListening, stopListening, isSupported, resetVoice } = useVoiceJournal();
 
@@ -194,7 +197,7 @@ export default function AskBloom() {
 
     try {
       let response;
-      if (isDemoMode) {
+      if (isDemoMode && !hasGeminiKey) {
         await new Promise(r => setTimeout(r, 1200));
         const { generateBloomResponse } = await import('../../utils/aiEngine');
         response = generateBloomResponse(userInput, symptomLogs);
@@ -204,7 +207,12 @@ export default function AskBloom() {
       addConversationMessage(conv.id, response);
       speak(response.content);
     } catch (err) {
-      setAiError('Bloom is temporarily unavailable. Please try again in a moment.');
+      const message = err instanceof Error ? err.message : '';
+      if (/API key|permission|quota|rate|403|429|400/i.test(message)) {
+        setAiError('Gemini could not use that API key. Check that it is valid, enabled for the Gemini API, and not restricted from this site.');
+      } else {
+        setAiError('Bloom is temporarily unavailable. Please try again in a moment.');
+      }
       console.error('[AskBloom]', err);
     } finally {
       setIsTyping(false);
@@ -278,17 +286,21 @@ export default function AskBloom() {
       </div>
 
       {/* Status indicator */}
-      {!isDemoMode && (
+      {(hasGeminiKey || !isDemoMode) && (
         <div
           className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs mb-3"
           style={{
-            backgroundColor: isConfigured ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)',
+            backgroundColor: (hasGeminiKey || isConfigured) ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)',
             color: 'var(--bloom-text)',
-            border: isConfigured ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(245,158,11,0.3)',
+            border: (hasGeminiKey || isConfigured) ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(245,158,11,0.3)',
           }}
         >
-          {isConfigured ? <Wifi size={12} /> : <WifiOff size={12} />}
-          {isConfigured
+          {(hasGeminiKey || isConfigured) ? <Wifi size={12} /> : <WifiOff size={12} />}
+          {hasCustomKey
+            ? 'Connected to Bloom AI with your Gemini key'
+            : hasGeminiKey
+              ? 'Connected to Bloom AI with the configured Gemini key'
+            : isConfigured
             ? 'Connected to Bloom AI — responses are personalised to your profile'
             : 'Demo mode — connect Bloom services for personalised AI responses'}
         </div>

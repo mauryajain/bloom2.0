@@ -8,6 +8,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { SymptomEntry, Severity, SymptomCategory } from '../types';
 import { getGeminiKey } from '../lib/geminiKeyManager';
 
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
 export interface ExtractedSymptomData {
   symptoms: {
     name: string;
@@ -68,7 +70,7 @@ export async function extractSymptomsFromVoice(transcript: string): Promise<Extr
 
   try {
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
     const result = await model.generateContent(EXTRACTION_PROMPT + transcript);
     const text = result.response.text().trim();
