@@ -179,7 +179,7 @@ export default function LifeTimeline() {
               Roadmap
             </div>
 
-            <svg className="h-[520px] w-full" viewBox="0 0 760 560" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <svg className="h-[420px] w-full" viewBox="0 0 760 560" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
               <defs>
                 <linearGradient id="spiralGradient" x1="0%" y1="100%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="var(--bloom-muted)" />
@@ -271,20 +271,10 @@ export default function LifeTimeline() {
                       {index + 1}
                     </text>
 
-                    <text
-                      x={marker.x}
-                      y={marker.y + 48}
-                      textAnchor="middle"
-                      className="select-none text-[11px] font-semibold"
-                      fill={isSelected ? stage.uiTheme.primary : 'var(--bloom-muted)'}
-                    >
-                      {stageLabel(stage.stage)}
-                    </text>
-
                     {isActive && (
                       <text
                         x={marker.x}
-                        y={marker.y - 42}
+                        y={marker.y - 48}
                         textAnchor="middle"
                         className="select-none text-[13px] font-semibold"
                         fill="var(--bloom-rose)"
@@ -296,6 +286,47 @@ export default function LifeTimeline() {
                 );
               })}
             </svg>
+
+            <div className="grid grid-cols-2 gap-2 px-1 pb-1 md:grid-cols-4">
+              {lifeStages.map((stage, index) => {
+                const isActive = index === currentIndex;
+                const isSelected = selectedStage.stage === stage.stage;
+
+                return (
+                  <button
+                    key={stage.stage}
+                    type="button"
+                    onClick={() => openStage(stage)}
+                    className="flex min-h-[52px] items-center gap-2 rounded-2xl px-3 py-2 text-left transition-transform hover:-translate-y-0.5"
+                    style={{
+                      background: isSelected ? `${stage.uiTheme.primary}20` : 'var(--bloom-surface)',
+                      border: `1px solid ${isSelected ? stage.uiTheme.primary : 'var(--bloom-border)'}`,
+                    }}
+                  >
+                    <span
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                      style={{
+                        background: isSelected ? stage.uiTheme.primary : 'var(--bloom-background)',
+                        color: isSelected ? '#ffffff' : 'var(--bloom-muted)',
+                        border: `1px solid ${isSelected ? stage.uiTheme.primary : 'var(--bloom-border)'}`,
+                      }}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs font-semibold" style={{ color: isSelected ? stage.uiTheme.primary : 'var(--bloom-foreground)' }}>
+                        {stageLabel(stage.stage)}
+                      </span>
+                      {isActive && (
+                        <span className="block text-[10px] font-semibold" style={{ color: 'var(--bloom-rose)' }}>
+                          You are here
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <StageDetails stage={selectedStage} currentIndex={currentIndex} />

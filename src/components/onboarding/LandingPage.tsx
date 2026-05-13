@@ -89,19 +89,20 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ===== HERO SECTION ===== */}
-      <section className="relative flex flex-col items-center justify-center min-h-screen px-6 pt-20 pb-8">
+      <section className="relative grid min-h-screen grid-cols-1 items-center gap-8 px-6 py-8 lg:grid-cols-[minmax(420px,0.95fr)_minmax(420px,0.75fr)] lg:px-10">
+        <div className="flex flex-col items-center">
         {/* Animated Bloom Icon */}
         <div
-          className="relative mb-10"
-          style={{ width: 160, height: 160 }}
+          className="relative mb-6"
+          style={{ width: 112, height: 112 }}
         >
           {petalColors.map((color, i) => (
             <div
               key={i}
               className="absolute bottom-1/2 left-1/2"
               style={{
-                width: 60,
-                height: 100,
+                width: 42,
+                height: 70,
                 transformOrigin: 'center bottom',
                 transform: `translateX(-50%) rotate(${i * 60}deg)`,
                 animation: `bloom-float 4s ease-in-out infinite`,
@@ -110,8 +111,8 @@ export default function LandingPage() {
             >
               <div
                 style={{
-                  width: 60,
-                  height: 100,
+                  width: 42,
+                  height: 70,
                   borderRadius: '50%',
                   background: color,
                   opacity: 0.7,
@@ -123,8 +124,8 @@ export default function LandingPage() {
           <div
             className="absolute"
             style={{
-              width: 40,
-              height: 40,
+              width: 30,
+              height: 30,
               borderRadius: '50%',
               background: '#06d6a0',
               top: '50%',
@@ -142,7 +143,7 @@ export default function LandingPage() {
           style={{
             fontFamily: 'Fraunces, serif',
             fontStyle: 'italic',
-            fontSize: 72,
+            fontSize: 'clamp(48px, 7vw, 72px)',
             fontWeight: 700,
             color: '#ffffff',
             textShadow: '0 0 40px rgba(124, 58, 237, 0.5)',
@@ -165,7 +166,7 @@ export default function LandingPage() {
         </p>
 
         {/* ===== FEATURE CARDS ===== */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-16 max-w-2xl w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 max-w-2xl w-full">
           {features.map((f, i) => {
             const Icon = featureIcons[i];
             const accent = accentColors[i];
@@ -220,7 +221,8 @@ export default function LandingPage() {
         </div>
 
         {/* ===== GARDEN PATH — DEMO PROFILES ===== */}
-        <div className="mt-16 w-full max-w-lg flex flex-col items-center gap-3">
+        </div>
+        <div className="flex w-full max-w-lg flex-col items-center gap-2 justify-self-center">
           <p
             className="flex items-center gap-2 mb-1"
             style={{
@@ -232,10 +234,7 @@ export default function LandingPage() {
             <Sparkles size={14} style={{ color: '#7c3aed' }} />
             Choose a demo profile to explore
           </p>
-          {demoUsers.slice(0, 6).map((demo, i) => {
-            const offset = i - 2.5;
-            const rot = offset * -3;
-            const ty = Math.abs(offset) * 4;
+          {demoUsers.map((demo, i) => {
             const accent = accentColors[i % accentColors.length];
             return (
               <button
@@ -243,30 +242,27 @@ export default function LandingPage() {
                 onClick={() => handleDemo(demo.user.id)}
                 className="group flex items-center gap-3 cursor-pointer overflow-hidden"
                 style={{
-                  height: 64,
+                  height: 54,
                   borderRadius: 99,
                   background: '#1a1430',
                   border: '1px solid rgba(124, 58, 237, 0.18)',
                   paddingLeft: 6,
-                  paddingRight: 6,
-                  width: 240,
-                  transform: `rotate(${rot}deg) translateY(${ty}px)`,
+                  paddingRight: 14,
+                  width: 'min(100%, 320px)',
                   transition: 'width 0.3s ease, transform 0.3s ease',
                 }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.width = '280px';
-                  (e.currentTarget as HTMLElement).style.transform = `rotate(${rot}deg) translateY(${ty}px)`;
+                  (e.currentTarget as HTMLElement).style.transform = 'translateX(6px)';
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.width = '240px';
-                  (e.currentTarget as HTMLElement).style.transform = `rotate(${rot}deg) translateY(${ty}px)`;
+                  (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
                 }}
               >
                 <div
                   className="shrink-0 flex items-center justify-center text-white font-bold text-lg"
                   style={{
-                    width: 50,
-                    height: 50,
+                    width: 42,
+                    height: 42,
                     borderRadius: '50%',
                     background: accent,
                   }}
@@ -277,7 +273,7 @@ export default function LandingPage() {
                   <p
                     style={{
                       fontFamily: "'DM Sans', sans-serif",
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: 600,
                       color: '#f0ecff',
                       whiteSpace: 'nowrap',
@@ -313,7 +309,7 @@ export default function LandingPage() {
         </div>
 
         {/* ===== CTA BUTTONS ===== */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 lg:col-start-2">
           <button
             onClick={() => { setTab('demo'); setError(''); }}
             className="cursor-pointer"
@@ -323,8 +319,8 @@ export default function LandingPage() {
               fontFamily: "'DM Sans', sans-serif",
               fontSize: 16,
               fontWeight: 600,
-              height: 52,
-              width: 180,
+              height: 48,
+              width: 150,
               border: 'none',
               borderRadius: 14,
               transition: 'all 0.3s ease',
@@ -349,8 +345,8 @@ export default function LandingPage() {
               fontFamily: "'DM Sans', sans-serif",
               fontSize: 16,
               fontWeight: 600,
-              height: 52,
-              width: 180,
+              height: 48,
+              width: 150,
               border: '1px solid rgba(124, 58, 237, 0.18)',
               borderRadius: 14,
               transition: 'all 0.15s ease',
@@ -373,8 +369,8 @@ export default function LandingPage() {
               fontFamily: "'DM Sans', sans-serif",
               fontSize: 16,
               fontWeight: 600,
-              height: 52,
-              width: 180,
+              height: 48,
+              width: 150,
               border: '1px solid rgba(124, 58, 237, 0.18)',
               borderRadius: 14,
               transition: 'all 0.15s ease',
@@ -392,7 +388,7 @@ export default function LandingPage() {
 
         {/* ===== AUTH PANEL ===== */}
         <div
-          className="mt-12 w-full max-w-md rounded-2xl p-6"
+          className="mt-0 w-full max-w-md rounded-2xl p-5 lg:col-start-2 lg:justify-self-center"
           style={{
             background: '#1a1430',
             border: '1px solid rgba(124, 58, 237, 0.18)',
@@ -692,7 +688,7 @@ export default function LandingPage() {
 
         {/* Footer disclaimer */}
         <p
-          className="text-[11px] text-center mt-6 max-w-sm"
+          className="text-[11px] text-center mt-0 max-w-sm lg:col-start-2 lg:justify-self-center"
           style={{ color: '#8b7daa', fontFamily: "'DM Sans', sans-serif" }}
         >
           BLOOM is a health tracking tool, not a medical device.
