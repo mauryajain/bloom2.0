@@ -40,6 +40,26 @@
   50% { transform: translateY(-6px); }
 }
 
+@keyframes bloom-petal-open {
+  0% {
+    opacity: 0.28;
+    transform: translateY(10px) scale(0.62);
+  }
+  34%, 82% {
+    opacity: 0.78;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0.5;
+    transform: translateY(4px) scale(0.82);
+  }
+}
+
+@keyframes bloom-center-glow {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.92); }
+  45%, 82% { transform: translate(-50%, -50%) scale(1.08); }
+}
+
 @keyframes bloom-fade-up {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }

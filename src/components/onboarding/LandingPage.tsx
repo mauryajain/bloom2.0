@@ -105,8 +105,6 @@ export default function LandingPage() {
                 height: 70,
                 transformOrigin: 'center bottom',
                 transform: `translateX(-50%) rotate(${i * 60}deg)`,
-                animation: `bloom-float 4s ease-in-out infinite`,
-                animationDelay: `${i * 0.4}s`,
               }}
             >
               <div
@@ -115,7 +113,10 @@ export default function LandingPage() {
                   height: 70,
                   borderRadius: '50%',
                   background: color,
-                  opacity: 0.7,
+                  opacity: 0.78,
+                  transformOrigin: 'center bottom',
+                  animation: 'bloom-petal-open 3.6s ease-in-out infinite',
+                  animationDelay: `${i * 0.16}s`,
                 }}
               />
             </div>
@@ -132,6 +133,7 @@ export default function LandingPage() {
               left: '50%',
               transform: 'translate(-50%, -50%)',
               boxShadow: '0 0 24px rgba(6, 214, 160, 0.6)',
+              animation: 'bloom-center-glow 3.6s ease-in-out infinite',
               zIndex: 2,
             }}
           />
