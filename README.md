@@ -15,7 +15,7 @@
 [![Gemini](https://img.shields.io/badge/Gemini-1.5%20Flash-4285F4?style=flat-square&logo=google)](https://aistudio.google.com)
 [![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)](LICENSE)
 
-[Live Demo](https://ambharat314.github.io/bloom2.0/) · [Setup Guide](#setup) · [Features](#features) · [Tech Stack](#tech-stack)
+[Live Demo](https://ambharat314.github.io/bloom2.0/#/) · [Setup Guide](#setup) · [Features](#features) · [Tech Stack](#tech-stack)
 
 </div>
 
