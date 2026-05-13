@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
-import { User, Palette, Info, Bell, Stethoscope, Shield } from 'lucide-react';
+import { User, Palette, Info, Bell, Stethoscope, Shield, Key, Eye, EyeOff, Check, X, Sparkles } from 'lucide-react';
+import { getGeminiKey, setGeminiKey, clearGeminiKey, hasCustomGeminiKey } from '../../lib/geminiKeyManager';
 
 const sections = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'preferences', label: 'Preferences', icon: Palette },
+  { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'about', label: 'About', icon: Info },
 ] as const;
 
@@ -62,6 +64,32 @@ export default function SettingsPage() {
   const { currentUser, userProfile } = useBloomStore();
   const [activeSection, setActiveSection] = useState('profile');
   const [lifeStageAdaptive, setLifeStageAdaptive] = useState(true);
+
+  // API Key state
+  const [geminiInput, setGeminiInput] = useState('');
+  const [showKey, setShowKey] = useState(false);
+  const [keySaved, setKeySaved] = useState(false);
+  const [hasKey, setHasKey] = useState(hasCustomGeminiKey());
+  const envKeyExists = !!(import.meta.env.VITE_GEMINI_API_KEY as string);
+
+  // Load existing key into input on mount
+  useEffect(() => {
+    const existing = getGeminiKey();
+    if (existing) setGeminiInput(existing);
+  }, []);
+
+  const handleSaveKey = () => {
+    setGeminiKey(geminiInput);
+    setHasKey(true);
+    setKeySaved(true);
+    setTimeout(() => setKeySaved(false), 2000);
+  };
+
+  const handleClearKey = () => {
+    clearGeminiKey();
+    setGeminiInput((import.meta.env.VITE_GEMINI_API_KEY as string) || '');
+    setHasKey(false);
+  };
 
   if (!currentUser) return null;
 
@@ -352,6 +380,230 @@ export default function SettingsPage() {
                   />
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====== API KEYS SECTION ====== */}
+        {activeSection === 'api-keys' && (
+          <div className="flex flex-col gap-6">
+            {/* Header */}
+            <div>
+              <h2
+                style={{
+                  fontFamily: "'Fraunces', serif",
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: 'var(--bloom-text)',
+                  margin: 0,
+                }}
+              >
+                Gemini API Key
+              </h2>
+              <p
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 13,
+                  color: 'var(--bloom-muted)',
+                  marginTop: 6,
+                  lineHeight: 1.6,
+                }}
+              >
+                Enter your own Google Gemini API key to power Ask Bloom, Body Forecast,
+                Voice Extractor, and the monthly Bloom Letter — with no rate limits.
+              </p>
+            </div>
+
+            {/* Status indicator */}
+            <div
+              className="flex items-center gap-3 px-4 py-3 rounded-xl"
+              style={{
+                background: (hasKey || envKeyExists)
+                  ? 'rgba(34, 197, 94, 0.08)'
+                  : 'rgba(251, 191, 36, 0.08)',
+                border: (hasKey || envKeyExists)
+                  ? '1px solid rgba(34, 197, 94, 0.25)'
+                  : '1px solid rgba(251, 191, 36, 0.25)',
+              }}
+            >
+              <Sparkles size={16} style={{ color: (hasKey || envKeyExists) ? 'var(--bloom-teal)' : 'var(--bloom-amber)' }} />
+              <span
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 13,
+                  color: 'var(--bloom-text)',
+                }}
+              >
+                {hasKey
+                  ? '✅ Using your custom Gemini key — unlimited AI access'
+                  : envKeyExists
+                    ? '✅ Using environment key — add your own for unlimited access'
+                    : '⚠️ No Gemini key configured — AI features run in demo mode'}
+              </span>
+            </div>
+
+            {/* Key input */}
+            <div className="flex flex-col gap-2">
+              <label
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: 'var(--bloom-muted)',
+                }}
+              >
+                API Key
+              </label>
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex-1 flex items-center gap-2"
+                  style={{
+                    background: 'var(--bloom-surface)',
+                    border: '1px solid var(--bloom-border)',
+                    borderRadius: 12,
+                    padding: '0 12px',
+                    height: 48,
+                    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                  }}
+                >
+                  <Key size={16} style={{ color: 'var(--bloom-muted)', flexShrink: 0 }} />
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={geminiInput}
+                    onChange={e => setGeminiInput(e.target.value)}
+                    placeholder="AIzaSy... (paste your Gemini API key)"
+                    style={{
+                      flex: 1,
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: 'var(--bloom-text)',
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 13,
+                    }}
+                    onFocus={e => {
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        parent.style.borderColor = 'var(--bloom-glow)';
+                        parent.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.2)';
+                      }
+                    }}
+                    onBlur={e => {
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        parent.style.borderColor = 'var(--bloom-border)';
+                        parent.style.boxShadow = 'none';
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => setShowKey(!showKey)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--bloom-muted)',
+                      padding: 4,
+                      flexShrink: 0,
+                    }}
+                    title={showKey ? 'Hide key' : 'Show key'}
+                    aria-label={showKey ? 'Hide key' : 'Show key'}
+                  >
+                    {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSaveKey}
+                disabled={!geminiInput.trim()}
+                className="flex items-center gap-2 px-5 py-2.5 font-medium transition-all"
+                style={{
+                  background: geminiInput.trim()
+                    ? 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))'
+                    : 'var(--bloom-lift)',
+                  color: geminiInput.trim() ? 'white' : 'var(--bloom-muted)',
+                  borderRadius: 14,
+                  border: 'none',
+                  cursor: geminiInput.trim() ? 'pointer' : 'not-allowed',
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 14,
+                  opacity: geminiInput.trim() ? 1 : 0.5,
+                }}
+              >
+                {keySaved ? <Check size={16} /> : <Key size={16} />}
+                {keySaved ? 'Saved!' : 'Save Key'}
+              </button>
+
+              {hasKey && (
+                <button
+                  onClick={handleClearKey}
+                  className="flex items-center gap-2 px-4 py-2.5 font-medium transition-all"
+                  style={{
+                    background: 'rgba(232, 121, 160, 0.08)',
+                    border: '1px solid rgba(232, 121, 160, 0.18)',
+                    color: 'var(--bloom-rose)',
+                    borderRadius: 14,
+                    cursor: 'pointer',
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 14,
+                  }}
+                >
+                  <X size={16} />
+                  Clear Custom Key
+                </button>
+              )}
+            </div>
+
+            {/* Help text */}
+            <div
+              className="flex flex-col gap-3 p-4 rounded-xl"
+              style={{
+                background: 'var(--bloom-surface)',
+                border: '1px solid var(--bloom-border)',
+              }}
+            >
+              <h3
+                style={{
+                  fontFamily: "'Fraunces', serif",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: 'var(--bloom-text)',
+                  margin: 0,
+                }}
+              >
+                How to get a key
+              </h3>
+              <ol
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 13,
+                  color: 'var(--bloom-muted)',
+                  lineHeight: 1.8,
+                  paddingLeft: 18,
+                  margin: 0,
+                }}
+              >
+                <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--bloom-glow)', textDecoration: 'underline' }}>Google AI Studio</a></li>
+                <li>Click <strong style={{ color: 'var(--bloom-text)' }}>"Create API Key"</strong></li>
+                <li>Copy the key and paste it above</li>
+              </ol>
+              <p
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 11,
+                  fontStyle: 'italic',
+                  color: 'var(--bloom-muted)',
+                  margin: 0,
+                }}
+              >
+                🔒 Your key is stored only in your browser's local storage and never sent to our servers.
+              </p>
             </div>
           </div>
         )}

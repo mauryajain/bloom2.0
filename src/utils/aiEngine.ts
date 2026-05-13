@@ -8,6 +8,7 @@ import { SymptomLog, PatternAlert, AskBloomMessage, UserProfile } from '../types
 import { conditionLibrary } from '../data/conditions';
 import { supabase } from '../lib/supabase';
 import { buildSystemPrompt } from '../lib/buildSystemPrompt';
+import { getGeminiKey } from '../lib/geminiKeyManager';
 
 // ---- Emergency Detection (expanded keyword list) ----
 const EMERGENCY_KEYWORDS = [
@@ -34,7 +35,7 @@ export function checkEmergencySymptoms(symptoms: string[]): { isEmergency: boole
 // ---- Real AI call ----
 export async function askBloomAI(userMessage: string, profile?: UserProfile | null): Promise<AskBloomMessage> {
   try {
-    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const geminiKey = getGeminiKey();
 
     const emergencyCheck = checkEmergencySymptoms([userMessage]);
     if (emergencyCheck) {
