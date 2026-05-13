@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { format, addDays, parseISO, subDays } from 'date-fns';
 import type { User, UserProfile, SymptomLog, PatternAlert, BodyForecast, DayForecast } from '../types';
 import { buildSystemPrompt } from '../lib/buildSystemPrompt';
+import { getGeminiKey } from '../lib/geminiKeyManager';
 
 function getNextWeekDates(): { weekStart: string; weekEnd: string; dates: string[] } {
   const today = new Date();
@@ -320,7 +321,7 @@ export async function generateBodyForecast(
     };
   }
 
-  const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const geminiKey = getGeminiKey();
   if (geminiKey) {
     try {
       const prompt = buildForecastPrompt(user, profile, logs, patterns);
