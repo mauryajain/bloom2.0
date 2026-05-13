@@ -3,7 +3,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { useBloomStore } from '../../store/useBloomStore';
-import { getGeminiKey } from '../../lib/geminiKeyManager';
 
 const stageInsight: Record<string, string> = {
   puberty: 'For puberty, the most useful thing is separating what is common in early cycles from what is disruptive enough to deserve support.',
@@ -136,7 +135,7 @@ You are not being dramatic by paying attention. You are building evidence, langu
     setError('');
 
     try {
-      const apiKey = getGeminiKey();
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey) {
         saveLetter(buildLocalLetter());
         return;

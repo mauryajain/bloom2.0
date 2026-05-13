@@ -6,7 +6,6 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { SymptomEntry, Severity, SymptomCategory } from '../types';
-import { getGeminiKey } from '../lib/geminiKeyManager';
 
 export interface ExtractedSymptomData {
   symptoms: {
@@ -59,7 +58,7 @@ Respond ONLY with valid JSON matching this schema (no markdown, no code fences):
 USER SAID: `;
 
 export async function extractSymptomsFromVoice(transcript: string): Promise<ExtractedSymptomData> {
-  const geminiKey = getGeminiKey();
+  const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!geminiKey) {
     // Fallback: basic keyword extraction if no Gemini key
