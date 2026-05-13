@@ -89,8 +89,8 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ===== HERO SECTION ===== */}
-      <section className="relative grid min-h-screen grid-cols-1 items-center gap-8 px-6 py-8 lg:grid-cols-[minmax(420px,0.95fr)_minmax(420px,0.75fr)] lg:px-10">
-        <div className="flex flex-col items-center">
+      <section className="relative flex min-h-screen flex-col items-center px-6 py-8 lg:px-10">
+        <div className="flex w-full flex-col items-center">
         {/* Animated Bloom Icon */}
         <div
           className="relative mb-6"
@@ -222,7 +222,7 @@ export default function LandingPage() {
 
         {/* ===== GARDEN PATH — DEMO PROFILES ===== */}
         </div>
-        <div className="flex w-full max-w-lg flex-col items-center gap-2 justify-self-center">
+        <div className="mt-8 flex w-full max-w-lg flex-col items-center gap-2">
           <p
             className="flex items-center gap-2 mb-1"
             style={{
@@ -248,7 +248,7 @@ export default function LandingPage() {
                   border: '1px solid rgba(124, 58, 237, 0.18)',
                   paddingLeft: 6,
                   paddingRight: 14,
-                  width: 'min(100%, 320px)',
+                  width: 'min(100%, 400px)',
                   transition: 'width 0.3s ease, transform 0.3s ease',
                 }}
                 onMouseEnter={e => {
@@ -309,7 +309,7 @@ export default function LandingPage() {
         </div>
 
         {/* ===== CTA BUTTONS ===== */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 lg:col-start-2">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <button
             onClick={() => { setTab('demo'); setError(''); }}
             className="cursor-pointer"
@@ -388,7 +388,7 @@ export default function LandingPage() {
 
         {/* ===== AUTH PANEL ===== */}
         <div
-          className="mt-0 w-full max-w-md rounded-2xl p-5 lg:col-start-2 lg:justify-self-center"
+          className="mt-6 w-full max-w-md rounded-2xl p-5"
           style={{
             background: '#1a1430',
             border: '1px solid rgba(124, 58, 237, 0.18)',
@@ -688,7 +688,7 @@ export default function LandingPage() {
 
         {/* Footer disclaimer */}
         <p
-          className="text-[11px] text-center mt-0 max-w-sm lg:col-start-2 lg:justify-self-center"
+          className="mt-4 max-w-sm text-center text-[11px]"
           style={{ color: '#8b7daa', fontFamily: "'DM Sans', sans-serif" }}
         >
           BLOOM is a health tracking tool, not a medical device.
