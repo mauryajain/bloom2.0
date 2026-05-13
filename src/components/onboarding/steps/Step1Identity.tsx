@@ -1,4 +1,3 @@
-// Step 1 — About You (nickname, DOB, pronouns)
 import type { OnboardingData } from '../../../types';
 
 interface Props {
@@ -34,15 +33,15 @@ export default function Step1Identity({ data, onUpdate, onNext }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold mb-1">What should we call you?</h3>
-        <p className="text-warm-400 text-sm">This is how Bloom will address you throughout the app.</p>
+        <h3 className="text-xl font-bold mb-1" style={{fontFamily:'var(--font-heading)'}}>What should we call you?</h3>
+        <p className="text-sm" style={{color:'var(--bloom-muted)'}}>This is how Bloom will address you throughout the app.</p>
       </div>
 
-      {/* Nickname */}
       <div>
-        <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2 block">Your nickname or first name</label>
+        <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{color:'var(--bloom-muted)'}}>Your nickname or first name</label>
         <input
-          className="bloom-input text-lg"
+          className="text-lg"
+          style={{background:'var(--bloom-surface)', border:'1px solid var(--bloom-border)', borderRadius:12, color:'var(--bloom-text)', padding:'12px 16px', width:'100%', outline:'none'}}
           placeholder="e.g. Priya, Alex, Sam..."
           value={data.nickname}
           onChange={e => onUpdate({ nickname: e.target.value })}
@@ -51,39 +50,45 @@ export default function Step1Identity({ data, onUpdate, onNext }: Props) {
         />
       </div>
 
-      {/* Date of Birth */}
       <div>
-        <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2 block">Date of birth</label>
+        <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{color:'var(--bloom-muted)'}}>Date of birth</label>
         <input
-          className={`bloom-input ${dobError ? 'border-rose-300' : ''}`}
+          style={{
+            background:'var(--bloom-surface)',
+            border:`1px solid ${dobError ? 'var(--bloom-rose)' : 'var(--bloom-border)'}`,
+            borderRadius:12,
+            color:'var(--bloom-text)',
+            padding:'12px 16px',
+            width:'100%',
+            outline:'none'
+          }}
           type="date"
           max={today}
           value={data.dateOfBirth}
           onChange={e => onUpdate({ dateOfBirth: e.target.value })}
         />
-        {dobError && <p className="text-xs text-rose-500 mt-1">{dobError}</p>}
+        {dobError && <p className="text-xs mt-1" style={{color:'var(--bloom-rose)'}}>{dobError}</p>}
         {isMinor && (
-          <div className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
-            🛡️ <strong>Young user detected.</strong> Bloom will automatically apply age-appropriate content settings.
+          <div className="mt-2 p-3 rounded-xl text-xs" style={{background:'rgba(251,191,36,0.12)', border:'1px solid rgba(251,191,36,0.25)', color:'var(--bloom-amber)'}}>
+            <strong>Young user detected.</strong> Bloom will automatically apply age-appropriate content settings.
           </div>
         )}
         {age !== null && !isMinor && !dobError && (
-          <p className="text-xs text-warm-400 mt-1">Age: {age} years</p>
+          <p className="text-xs mt-1" style={{color:'var(--bloom-muted)'}}>Age: {age} years</p>
         )}
       </div>
 
-      {/* Pronouns */}
       <div>
-        <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2 block">Your pronouns</label>
+        <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{color:'var(--bloom-muted)'}}>Your pronouns</label>
         <div className="flex flex-wrap gap-2">
           {PRONOUNS.map(p => (
             <button
               key={p}
-              className={`px-4 py-2 rounded-full text-sm transition-all font-medium ${
-                data.pronouns === p
-                  ? 'bg-bloom-500 text-white shadow-bloom'
-                  : 'bg-white/60 border border-warm-200 text-warm-600 hover:border-bloom-300'
-              }`}
+              className="px-4 py-2 rounded-full text-sm transition-all font-medium"
+              style={data.pronouns === p
+                ? {background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', border:'none', color:'#fff', boxShadow:'0 0 15px rgba(124,58,237,0.3)'}
+                : {background:'var(--bloom-surface)', border:'1px solid var(--bloom-border)', color:'var(--bloom-text)'}
+              }
               onClick={() => onUpdate({ pronouns: p })}
             >
               {p}
@@ -93,7 +98,15 @@ export default function Step1Identity({ data, onUpdate, onNext }: Props) {
       </div>
 
       <button
-        className="btn-bloom w-full mt-2"
+        className="w-full mt-2 font-semibold py-3"
+        style={{
+          background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))',
+          border:'none',
+          borderRadius:14,
+          color:'#fff',
+          cursor: canNext ? 'pointer' : 'not-allowed',
+          opacity: canNext ? 1 : 0.5
+        }}
         onClick={onNext}
         disabled={!canNext}
       >

@@ -1,11 +1,5 @@
-// ============================================================
-// BLOOM — Doctor Visit Prep Report
-// Agent 2 (AI Lead) + Agent 3 (UI/UX)
-// ============================================================
-
 import { useBloomStore } from '../../store/useBloomStore';
-import { FileText, Download, Calendar, TrendingUp, MessageCircle, Clock, AlertCircle, ShieldCheck, Clipboard, ClipboardCheck, ListChecks, Stethoscope } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { FileText, Printer, Shield, Stethoscope, Check, AlertCircle, MessageCircle, Calendar, Clock, AlertTriangle, Clipboard, ClipboardCheck, ListChecks } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const addDays = (date: Date, days: number) => {
@@ -199,7 +193,7 @@ const buildClinicalShield = (input: string): ClinicalShieldResult | null => {
     severity === 'not quantified' || severity.includes('exact 0-10 rating not documented') ? 'Exact severity on a 0-10 scale' : '',
     duration === 'duration not specified' ? 'When it started and how long each episode lasts' : '',
     !cycleTiming ? 'Cycle day or relation to period/ovulation, if relevant' : '',
-    medication ? 'Dose timing and amount of relief' : 'Medication, heat, rest, or other relief attempts' ,
+    medication ? 'Dose timing and amount of relief' : 'Medication, heat, rest, or other relief attempts',
     functionalImpacts.length === 0 ? 'Impact on sleep, work/school, movement, eating, or caregiving' : '',
     associatedSymptoms.length === 0 ? 'Associated symptoms such as nausea, fever, dizziness, bowel/bladder changes, bleeding, or discharge' : '',
   ].filter(Boolean);
@@ -237,6 +231,15 @@ const buildClinicalShield = (input: string): ClinicalShieldResult | null => {
   };
 };
 
+const severityColor = (severity: string) => {
+  switch (severity) {
+    case 'high': return '#e879a0';
+    case 'medium': return '#fbbf24';
+    case 'low': return '#06d6a0';
+    default: return '#7c3aed';
+  }
+};
+
 export default function DoctorPrep() {
   const { doctorPrep, currentUser, symptomLogs, refreshDoctorPrep } = useBloomStore();
   const [plainLanguage, setPlainLanguage] = useState('');
@@ -266,90 +269,224 @@ export default function DoctorPrep() {
     window.setTimeout(() => setCopiedTarget(null), 1500);
   };
 
-  const clinicalTranslatorPanel = (
-    <div className="glass-card p-5 space-y-4 border-l-4 border-l-bloom-400">
+  const clinicalShieldSection = (
+    <div
+      style={{
+        background: 'linear-gradient(135deg, var(--bloom-void), var(--bloom-deep))',
+        border: '1px solid rgba(232, 121, 160, 0.5)',
+        borderRadius: '20px',
+        padding: '24px',
+      }}
+      className="space-y-5"
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-semibold flex items-center gap-2">
-            <ShieldCheck size={18} className="text-bloom-500" /> Medical Gaslighting Shield
+          <h2
+            style={{
+              fontFamily: 'var(--font-heading)',
+              fontSize: '20px',
+              color: 'var(--bloom-rose)',
+            }}
+            className="flex items-center gap-2 font-semibold"
+          >
+            <Shield size={20} style={{ color: 'var(--bloom-rose)' }} />
+            Medical Gaslighting Shield
           </h2>
-          <p className="text-sm text-warm-400 mt-1">
+          <p className="text-sm mt-1" style={{ color: 'var(--bloom-muted)' }}>
             Turn symptom language into a clear note, missing-detail checklist, and appointment script.
           </p>
         </div>
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2 shrink-0">
           <button
-            className="btn-bloom flex items-center gap-2 text-sm"
             onClick={() => handleCopyShield('note')}
             disabled={!clinicalShield}
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-opacity disabled:opacity-40"
+            style={{
+              border: '1px solid var(--bloom-border)',
+              color: 'var(--bloom-text)',
+              background: 'transparent',
+            }}
           >
             <Clipboard size={14} /> {copiedTarget === 'note' ? 'Copied' : 'Copy note'}
           </button>
           <button
-            className="btn-bloom-outline flex items-center gap-2 text-sm px-4"
             onClick={() => handleCopyShield('script')}
             disabled={!clinicalShield}
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-opacity disabled:opacity-40"
+            style={{
+              border: '1px solid var(--bloom-border)',
+              color: 'var(--bloom-text)',
+              background: 'transparent',
+            }}
           >
             <ClipboardCheck size={14} /> {copiedTarget === 'script' ? 'Copied' : 'Script'}
           </button>
         </div>
       </div>
+
       <textarea
-        className="bloom-input min-h-24 resize-none"
         value={plainLanguage}
         onChange={(event) => setPlainLanguage(event.target.value)}
         placeholder={latestSymptomNote || 'Example: My stomach has been hurting so bad for a week and ibuprofen does not help.'}
+        style={{
+          background: 'var(--bloom-surface)',
+          border: '1px solid var(--bloom-border)',
+          borderRadius: '12px',
+          fontFamily: 'var(--font-body)',
+          fontSize: '14px',
+          color: 'var(--bloom-text)',
+          padding: '12px 16px',
+          width: '100%',
+          minHeight: '96px',
+          resize: 'none',
+          outline: 'none',
+        }}
       />
+
       {clinicalShield ? (
-        <div className="grid md:grid-cols-2 gap-3">
-          <div className="rounded-xl bg-warm-50 border border-warm-100 p-4 md:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-warm-400 mb-2 flex items-center gap-2">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div
+            className="md:col-span-2"
+            style={{
+              background: 'rgba(6, 214, 160, 0.06)',
+              borderLeft: '3px solid var(--bloom-teal)',
+              borderRadius: '8px',
+              padding: '16px',
+            }}
+          >
+            <p
+              className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-2"
+              style={{ color: 'var(--bloom-teal)' }}
+            >
               <Stethoscope size={14} /> Doctor-ready phrasing
             </p>
-            <p className="text-sm text-warm-700 leading-relaxed">{clinicalShield.clinicalPhrase}</p>
+            <p
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '13px',
+                color: 'var(--bloom-text)',
+                lineHeight: '1.6',
+              }}
+            >
+              {clinicalShield.clinicalPhrase}
+            </p>
           </div>
-          <div className="rounded-xl bg-white/70 border border-warm-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-warm-400 mb-3 flex items-center gap-2">
-              <ListChecks size={14} /> Evidence to bring
+
+          <div
+            style={{
+              background: 'var(--bloom-surface)',
+              borderRadius: '20px',
+              padding: '16px',
+            }}
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2" style={{ color: 'var(--bloom-muted)' }}>
+              <Check size={14} style={{ color: 'var(--bloom-teal)' }} /> Evidence to bring
             </p>
             <ul className="space-y-2">
               {clinicalShield.evidencePoints.map(point => (
-                <li key={point} className="text-xs text-warm-600 leading-relaxed flex gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-bloom-400" />
+                <li key={point} className="text-xs flex gap-2" style={{ color: 'var(--bloom-text)' }}>
+                  <Check size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--bloom-teal)' }} />
                   <span>{point}</span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="rounded-xl bg-white/70 border border-warm-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-warm-400 mb-3 flex items-center gap-2">
-              <AlertCircle size={14} /> Missing details
+
+          <div
+            style={{
+              background: 'var(--bloom-surface)',
+              borderRadius: '20px',
+              padding: '16px',
+            }}
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2" style={{ color: 'var(--bloom-muted)' }}>
+              <AlertCircle size={14} style={{ color: 'var(--bloom-amber)' }} /> Missing details
             </p>
             <ul className="space-y-2">
               {clinicalShield.missingDetails.length > 0 ? clinicalShield.missingDetails.map(detail => (
-                <li key={detail} className="text-xs text-warm-600 leading-relaxed flex gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                <li key={detail} className="text-xs flex gap-2" style={{ color: 'var(--bloom-text)' }}>
+                  <AlertCircle size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--bloom-amber)' }} />
                   <span>{detail}</span>
                 </li>
               )) : (
-                <li className="text-xs text-warm-600 leading-relaxed">Core symptom details are covered. Bring dates or logs if you have them.</li>
+                <li className="text-xs" style={{ color: 'var(--bloom-muted)' }}>Core symptom details are covered. Bring dates or logs if you have them.</li>
               )}
             </ul>
           </div>
-          <div className="rounded-xl bg-bloom-50 border border-bloom-100 p-4 md:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-bloom-700 mb-2">Appointment script</p>
-            <p className="text-sm text-warm-700 leading-relaxed">{clinicalShield.visitScript}</p>
+
+          <div className="md:col-span-2 relative" style={{ borderRadius: '20px', overflow: 'hidden' }}>
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                top: '8px',
+                left: '16px',
+                fontFamily: 'var(--font-heading)',
+                fontSize: '80px',
+                color: 'var(--bloom-glow)',
+                opacity: 0.15,
+                lineHeight: 1,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              }}
+            >
+              &ldquo;
+            </div>
+            <div
+              style={{
+                background: 'var(--bloom-surface)',
+                borderRadius: '20px',
+                padding: '20px 20px 20px 40px',
+              }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--bloom-muted)' }}>
+                Appointment script
+              </p>
+              <p
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '15px',
+                  fontStyle: 'italic',
+                  color: 'var(--bloom-text)',
+                  lineHeight: '1.7',
+                }}
+              >
+                {clinicalShield.visitScript}
+              </p>
+            </div>
           </div>
-          <div className="rounded-xl bg-amber-50 border border-amber-100 p-3 md:col-span-2">
-            <p className="text-xs text-amber-800 leading-relaxed">{clinicalShield.urgencyNote}</p>
+
+          <div
+            className="md:col-span-2"
+            style={{
+              background: 'transparent',
+              borderLeft: '3px solid var(--bloom-amber)',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              fontStyle: 'italic',
+              fontSize: '12px',
+              color: 'var(--bloom-muted)',
+              lineHeight: '1.5',
+            }}
+          >
+            {clinicalShield.urgencyNote}
           </div>
         </div>
       ) : (
-        <div className="rounded-xl bg-warm-50 border border-warm-100 p-4">
-          <p className="text-sm text-warm-500">Enter a symptom description to generate clinical phrasing.</p>
+        <div
+          style={{
+            background: 'var(--bloom-surface)',
+            borderRadius: '20px',
+            padding: '16px',
+          }}
+        >
+          <p className="text-sm" style={{ color: 'var(--bloom-muted)' }}>
+            Enter a symptom description to generate clinical phrasing.
+          </p>
         </div>
       )}
-      <p className="text-xs text-warm-400">
+
+      <p className="text-xs" style={{ color: 'var(--bloom-muted)' }}>
         This does not diagnose you; it helps make your symptoms harder to dismiss by separating facts, unknowns, and the question you want answered.
       </p>
     </div>
@@ -360,13 +497,24 @@ export default function DoctorPrep() {
 
     return (
       <div className="space-y-6 max-w-4xl">
-        {clinicalTranslatorPanel}
+        {clinicalShieldSection}
         <div className="text-center py-16">
-          <FileText size={48} className="text-warm-200 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No Report Available</h2>
-          <p className="text-warm-400 text-sm">Log at least 3 weeks of symptoms to generate your report.</p>
+          <FileText size={48} className="mx-auto mb-4" style={{ color: 'var(--bloom-muted)' }} />
+          <h2
+            style={{
+              fontFamily: 'var(--font-heading)',
+              fontSize: '22px',
+              color: 'var(--bloom-text)',
+            }}
+            className="mb-2 font-semibold"
+          >
+            No Report Available
+          </h2>
+          <p className="text-sm" style={{ color: 'var(--bloom-muted)' }}>
+            Log at least 3 weeks of symptoms to generate your report.
+          </p>
           {remainingLogs > 0 && (
-            <p className="text-xs text-warm-400 mt-2">
+            <p className="text-xs mt-2" style={{ color: 'var(--bloom-muted)' }}>
               {symptomLogs.length}/21 symptom logs recorded. {remainingLogs} more to go.
             </p>
           )}
@@ -378,162 +526,377 @@ export default function DoctorPrep() {
   const generatedDate = new Date(doctorPrep.generatedAt);
   const nextUpdateDate = addDays(generatedDate, 15);
 
+  const gradientBar = (color: string, pct: number) => (
+    <div
+      style={{
+        height: '8px',
+        borderRadius: '99px',
+        background: `linear-gradient(90deg, ${color}, transparent)`,
+        width: `${Math.min(pct, 100)}%`,
+      }}
+    />
+  );
+
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Header */}
+    <div className="space-y-8 max-w-4xl">
+      <style>{`
+        @keyframes stethoscope-swing {
+          0%, 100% { transform: rotate(-15deg); }
+          50% { transform: rotate(15deg); }
+        }
+      `}</style>
+
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold font-[var(--font-display)] flex items-center gap-2">
-            <FileText className="text-bloom-500" size={24} /> Doctor Visit Prep
+          <h1
+            style={{
+              fontFamily: 'var(--font-heading)',
+              fontSize: '30px',
+              color: 'var(--bloom-text)',
+            }}
+            className="flex items-center gap-3 font-semibold"
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                animation: 'stethoscope-swing 1s ease-in-out infinite alternate',
+              }}
+            >
+              <Stethoscope size={28} style={{ color: 'var(--bloom-teal)' }} />
+            </span>
+            Doctor Visit Prep
           </h1>
-          <p className="text-warm-400 text-sm mt-1">
+          <p className="text-sm mt-1" style={{ color: 'var(--bloom-muted)' }}>
             AI-generated summary of your symptom data for your healthcare provider
           </p>
-          <p className="text-xs text-warm-400 mt-2">
-            Last generated: {generatedDate.toLocaleDateString()} · Next update due: {nextUpdateDate.toLocaleDateString()}
+          <p className="text-xs mt-2" style={{ color: 'var(--bloom-muted)' }}>
+            Last generated: {generatedDate.toLocaleDateString()} &middot; Next update due: {nextUpdateDate.toLocaleDateString()}
           </p>
         </div>
-        <button className="btn-bloom flex items-center gap-2" onClick={handlePrint}>
-          <Download size={16} /> Print / Save PDF
+        <button
+          onClick={handlePrint}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg transition-all"
+          style={{
+            border: '1px solid var(--bloom-border)',
+            color: 'var(--bloom-text)',
+            background: 'transparent',
+            fontFamily: 'var(--font-body)',
+            fontSize: '14px',
+          }}
+        >
+          <Printer size={16} /> Print / Save PDF
         </button>
       </div>
 
-      {clinicalTranslatorPanel}
+      {clinicalShieldSection}
 
-      {/* Report Card */}
-      <div className="glass-card p-6 space-y-6">
-        {/* Patient Info */}
-        <div className="flex items-start justify-between border-b border-warm-100 pb-4">
+      <div
+        style={{
+          background: 'var(--bloom-surface)',
+          borderRadius: '20px',
+          padding: '28px',
+        }}
+        className="space-y-7"
+      >
+        <div className="flex items-start justify-between gap-4" style={{ borderBottom: '1px solid var(--bloom-border)', paddingBottom: '16px' }}>
           <div>
-            <h2 className="text-lg font-bold gradient-text">BLOOM Health Report</h2>
-            <p className="text-sm text-warm-500 mt-1">
-              Patient: {currentUser?.name} · Age {currentUser?.age} · {currentUser?.lifeStage}
+            <h2
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: '20px',
+                color: 'var(--bloom-text)',
+              }}
+              className="font-semibold"
+            >
+              BLOOM Health Report
+            </h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--bloom-muted)' }}>
+              Patient: {currentUser?.name} &middot; Age {currentUser?.age} &middot; {currentUser?.lifeStage}
             </p>
           </div>
-          <div className="text-right text-xs text-warm-400">
+          <div className="text-right text-xs shrink-0" style={{ color: 'var(--bloom-muted)' }}>
             <p>Report Period: {doctorPrep.dateRange.start} to {doctorPrep.dateRange.end}</p>
             <p>Generated: {generatedDate.toLocaleDateString()}</p>
             <p>Next update: {nextUpdateDate.toLocaleDateString()}</p>
           </div>
         </div>
 
-        {/* Summary */}
         <div>
-          <h3 className="font-semibold flex items-center gap-2 mb-2">
-            <AlertCircle size={16} className="text-bloom-500" /> Summary
+          <h3 className="font-semibold flex items-center gap-2 mb-2 text-sm" style={{ color: 'var(--bloom-text)' }}>
+            <AlertCircle size={16} style={{ color: 'var(--bloom-rose)' }} /> Summary
           </h3>
-          <p className="text-sm text-warm-600 leading-relaxed">{doctorPrep.summary}</p>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--bloom-muted)' }}>{doctorPrep.summary}</p>
         </div>
 
-        {/* Top Symptoms Chart */}
-        <div>
-          <h3 className="font-semibold flex items-center gap-2 mb-3">
-            <TrendingUp size={16} className="text-rose-400" /> Top Symptoms
-          </h3>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={doctorPrep.topSymptoms} layout="vertical">
-                <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={110} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.1)', fontSize: 12 }}
-                  formatter={(value: any, name: any) => [name === 'frequency' ? `${value} days` : `${value}/5`, name === 'frequency' ? 'Frequency' : 'Avg Severity']}
-                />
-                <Bar dataKey="frequency" fill="#a855f7" radius={[0, 6, 6, 0]} name="frequency" />
-              </BarChart>
-            </ResponsiveContainer>
+        <div className="relative">
+          <div style={{ borderTop: '1px solid var(--bloom-border)', position: 'relative' }} className="mb-6">
+            <div
+              style={{
+                position: 'absolute',
+                top: '-5px',
+                left: '50%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '8px',
+                height: '8px',
+                background: 'var(--bloom-glow)',
+                borderRadius: '1px',
+              }}
+            />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
-            {doctorPrep.topSymptoms.map(s => (
-              <div key={s.name} className="p-3 rounded-xl bg-warm-50 text-xs">
-                <p className="font-semibold">{s.name}</p>
-                <p className="text-warm-500">{s.frequency} occurrences · Avg severity {s.avgSeverity}/5</p>
-              </div>
-            ))}
+
+          <h3 className="font-semibold flex items-center gap-2 mb-4 text-sm" style={{ color: 'var(--bloom-text)' }}>
+            <ListChecks size={16} style={{ color: 'var(--bloom-rose)' }} /> Top Symptoms
+          </h3>
+          <div className="space-y-4">
+            {doctorPrep.topSymptoms.map(s => {
+              const freqPct = (s.frequency / Math.max(...doctorPrep.topSymptoms.map(x => x.frequency))) * 100;
+              return (
+                <div key={s.name} className="flex items-center gap-4">
+                  <div className="text-sm shrink-0 w-28" style={{ color: 'var(--bloom-text)' }}>{s.name}</div>
+                  <div className="flex-1">
+                    {gradientBar('#7c3aed', freqPct)}
+                  </div>
+                  <div className="text-xs shrink-0 text-right" style={{ color: 'var(--bloom-muted)', minWidth: '80px' }}>
+                    {s.frequency} days &middot; <span style={{ color: 'var(--bloom-teal)' }}>{s.avgSeverity}/5</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Detected Patterns */}
-        <div>
-          <h3 className="font-semibold flex items-center gap-2 mb-3">
-            <TrendingUp size={16} className="text-amber-500" /> Detected Patterns
+        <div className="relative">
+          <div style={{ borderTop: '1px solid var(--bloom-border)', position: 'relative' }} className="mb-6">
+            <div
+              style={{
+                position: 'absolute',
+                top: '-5px',
+                left: '50%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '8px',
+                height: '8px',
+                background: 'var(--bloom-glow)',
+                borderRadius: '1px',
+              }}
+            />
+          </div>
+
+          <h3 className="font-semibold flex items-center gap-2 mb-4 text-sm" style={{ color: 'var(--bloom-text)' }}>
+            <AlertCircle size={16} style={{ color: 'var(--bloom-amber)' }} /> Detected Patterns
           </h3>
           <div className="space-y-3">
             {doctorPrep.patterns.map(p => (
               <div
                 key={p.id}
-                className={`p-4 rounded-xl border-l-4 bg-warm-50 ${
-                  p.severity === 'high' ? 'border-l-rose-400' :
-                  p.severity === 'medium' ? 'border-l-amber-400' : 'border-l-sage-400'
-                }`}
+                style={{
+                  background: `linear-gradient(135deg, ${severityColor(p.severity)}08, transparent)`,
+                  border: `1px solid ${severityColor(p.severity)}30`,
+                  borderRadius: '16px',
+                  padding: '16px',
+                }}
               >
-                <p className="font-semibold text-sm">{p.title}</p>
-                <p className="text-xs text-warm-500 mt-1">{p.pattern}</p>
-                <div className="flex gap-2 mt-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <div
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: severityColor(p.severity),
+                      boxShadow: `0 0 8px ${severityColor(p.severity)}60`,
+                    }}
+                  />
+                  <p className="font-semibold text-sm" style={{ color: 'var(--bloom-text)' }}>{p.title}</p>
+                </div>
+                <p className="text-xs mt-1" style={{ color: 'var(--bloom-muted)' }}>{p.pattern}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
                   {p.conditionsFlagged.map(c => (
-                    <span key={c} className="badge badge-bloom">{c}</span>
+                    <span
+                      key={c}
+                      style={{
+                        background: 'rgba(124, 58, 237, 0.15)',
+                        color: 'var(--bloom-glow)',
+                        border: '1px solid rgba(124, 58, 237, 0.25)',
+                        borderRadius: '99px',
+                        padding: '2px 10px',
+                        fontSize: '11px',
+                      }}
+                    >
+                      {c}
+                    </span>
                   ))}
-                  <span className="badge badge-amber">{(p.confidence * 100).toFixed(0)}% confidence</span>
+                  <span
+                    style={{
+                      background: 'rgba(251, 191, 36, 0.12)',
+                      color: 'var(--bloom-amber)',
+                      border: '1px solid rgba(251, 191, 36, 0.2)',
+                      borderRadius: '99px',
+                      padding: '2px 10px',
+                      fontSize: '11px',
+                    }}
+                  >
+                    {(p.confidence * 100).toFixed(0)}% confidence
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Timeline */}
-        <div>
-          <h3 className="font-semibold flex items-center gap-2 mb-3">
-            <Clock size={16} className="text-bloom-500" /> Key Events Timeline
+        <div className="relative">
+          <div style={{ borderTop: '1px solid var(--bloom-border)', position: 'relative' }} className="mb-6">
+            <div
+              style={{
+                position: 'absolute',
+                top: '-5px',
+                left: '50%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '8px',
+                height: '8px',
+                background: 'var(--bloom-glow)',
+                borderRadius: '1px',
+              }}
+            />
+          </div>
+
+          <h3 className="font-semibold flex items-center gap-2 mb-4 text-sm" style={{ color: 'var(--bloom-text)' }}>
+            <Clock size={16} style={{ color: 'var(--bloom-teal)' }} /> Key Events Timeline
           </h3>
-          <div className="relative ml-4 border-l-2 border-bloom-200 space-y-4 pl-6">
-            {doctorPrep.timeline.map((t, i) => (
-              <div key={i} className="relative">
-                <div className="absolute -left-8 top-0.5 w-3 h-3 rounded-full bg-bloom-400 border-2 border-white" />
-                <p className="text-xs text-warm-400">{t.date}</p>
-                <p className="text-sm font-medium">{t.event}</p>
-              </div>
-            ))}
+          <div className="relative ml-4" style={{ borderLeft: '2px solid rgba(6, 214, 160, 0.3)' }}>
+            <div className="space-y-5 pl-6 pb-1">
+              {doctorPrep.timeline.map((t, i) => (
+                <div key={i} className="relative">
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '-30px',
+                      top: '4px',
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: 'var(--bloom-teal)',
+                      boxShadow: '0 0 8px rgba(6, 214, 160, 0.5)',
+                    }}
+                  />
+                  <p className="text-xs" style={{ color: 'var(--bloom-muted)' }}>{t.date}</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--bloom-text)' }}>{t.event}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Suggested Questions */}
-        <div>
-          <h3 className="font-semibold flex items-center gap-2 mb-3">
-            <MessageCircle size={16} className="text-sage-500" /> Questions for Your Doctor
+        <div className="relative">
+          <div style={{ borderTop: '1px solid var(--bloom-border)', position: 'relative' }} className="mb-6">
+            <div
+              style={{
+                position: 'absolute',
+                top: '-5px',
+                left: '50%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '8px',
+                height: '8px',
+                background: 'var(--bloom-glow)',
+                borderRadius: '1px',
+              }}
+            />
+          </div>
+
+          <h3 className="font-semibold flex items-center gap-2 mb-4 text-sm" style={{ color: 'var(--bloom-text)' }}>
+            <MessageCircle size={16} style={{ color: 'var(--bloom-teal)' }} /> Questions for Your Doctor
           </h3>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-warm-600">
+          <ol className="space-y-2">
             {doctorPrep.questions.map((q, i) => (
-              <li key={i} className="leading-relaxed">{q}</li>
+              <li
+                key={i}
+                className="flex items-start gap-3 text-sm"
+                style={{ color: 'var(--bloom-text)' }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    background: 'rgba(124, 58, 237, 0.2)',
+                    color: 'var(--bloom-glow)',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-heading)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {i + 1}
+                </span>
+                <span className="leading-relaxed">{q}</span>
+              </li>
             ))}
           </ol>
         </div>
 
-        {/* Cycle Data */}
-        <div className="p-4 rounded-xl bg-bloom-50 border border-bloom-100">
-          <h3 className="font-semibold flex items-center gap-2 mb-2">
-            <Calendar size={16} className="text-bloom-600" /> Cycle Summary
-          </h3>
-          <p className="text-sm text-warm-600">
-            Average cycle length:{' '}
-            <strong>
-              {doctorPrep.cycleData.avgLength > 0
-                ? `${doctorPrep.cycleData.avgLength} days`
-                : 'Not currently tracking cycles'}
-            </strong>
-          </p>
-          {doctorPrep.cycleData.irregularities.length > 0 && (
-            <ul className="mt-2 text-xs text-warm-500 space-y-1">
-              {doctorPrep.cycleData.irregularities.map((ir, i) => (
-                <li key={i}>• {ir}</li>
-              ))}
-            </ul>
-          )}
+        <div className="relative">
+          <div style={{ borderTop: '1px solid var(--bloom-border)', position: 'relative' }} className="mb-6">
+            <div
+              style={{
+                position: 'absolute',
+                top: '-5px',
+                left: '50%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '8px',
+                height: '8px',
+                background: 'var(--bloom-glow)',
+                borderRadius: '1px',
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(232, 121, 160, 0.08), transparent)',
+              border: '1px solid rgba(232, 121, 160, 0.2)',
+              borderRadius: '16px',
+              padding: '16px',
+            }}
+          >
+            <h3 className="font-semibold flex items-center gap-2 mb-2 text-sm" style={{ color: 'var(--bloom-text)' }}>
+              <Calendar size={16} style={{ color: 'var(--bloom-rose)' }} /> Cycle Summary
+            </h3>
+            <p className="text-sm" style={{ color: 'var(--bloom-muted)' }}>
+              Average cycle length:{' '}
+              <strong style={{ color: 'var(--bloom-text)' }}>
+                {doctorPrep.cycleData.avgLength > 0
+                  ? `${doctorPrep.cycleData.avgLength} days`
+                  : 'Not currently tracking cycles'}
+              </strong>
+            </p>
+            {doctorPrep.cycleData.irregularities.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {doctorPrep.cycleData.irregularities.map((ir, i) => (
+                  <li key={i} className="text-xs flex items-center gap-2" style={{ color: 'var(--bloom-muted)' }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--bloom-amber)', display: 'inline-block' }} />
+                    {ir}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
-        {/* Disclaimer */}
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
-          <p className="font-semibold">⚠️ Important Disclaimer</p>
-          <p className="mt-1">
+        <div
+          style={{
+            background: 'transparent',
+            borderLeft: '3px solid var(--bloom-amber)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            fontStyle: 'italic',
+            fontSize: '12px',
+            color: 'var(--bloom-muted)',
+            lineHeight: '1.6',
+          }}
+        >
+          <p className="font-semibold not-italic" style={{ color: 'var(--bloom-amber)' }}>Important Disclaimer</p>
+          <p className="mt-1 italic">
             This report is generated by BLOOM AI based on self-reported symptom data. It does not constitute a medical diagnosis.
             Pattern observations are provided to facilitate more informed conversations with healthcare providers.
             All clinical decisions should be made by qualified healthcare professionals.

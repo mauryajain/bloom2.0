@@ -177,41 +177,70 @@ Tone: like a knowledgeable friend who completely believes her. No diagnosis. Do 
   };
 
   return (
-    <div className="glass-card p-6 space-y-4">
+    <div
+      className="p-6 space-y-4"
+      style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)', borderRadius: 20 }}
+    >
       <div>
-        <h2 className="text-xl font-bold font-[var(--font-display)] gradient-text">
+        <h2
+          className="text-xl font-bold font-[var(--font-display)]"
+          style={{ color: 'var(--bloom-glow)' }}
+        >
           Your {monthName} Letter from Bloom
         </h2>
-        <p className="text-xs text-warm-400 mt-1">A personal reflection built from your symptoms, patterns, goals, and care questions.</p>
+        <p className="text-xs mt-1" style={{ color: 'var(--bloom-muted)' }}>A personal reflection built from your symptoms, patterns, goals, and care questions.</p>
       </div>
 
       {letter ? (
         <>
-          <p className="text-warm-600 leading-relaxed text-sm whitespace-pre-wrap">{letter}</p>
-          <p className="italic text-warm-400 text-sm">From Bloom, with care</p>
+          <p className="leading-relaxed text-sm whitespace-pre-wrap" style={{ color: 'var(--bloom-text)' }}>{letter}</p>
+          <p className="italic text-sm" style={{ color: 'var(--bloom-muted)' }}>From Bloom, with care</p>
           <div className="flex flex-wrap items-center gap-3">
-            <button type="button" className="btn-bloom text-sm flex items-center gap-2" onClick={downloadLetter}>
+            <button
+              type="button"
+              className="text-sm flex items-center gap-2 px-4 py-2.5 font-medium"
+              style={{ background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', color: 'white', borderRadius: 14 }}
+              onClick={downloadLetter}
+            >
               <Download size={16} /> Download letter
             </button>
-            <button type="button" className="text-sm text-bloom-500 font-medium" onClick={generateLetter} disabled={loading}>
+            <button
+              type="button"
+              className="text-sm font-medium"
+              style={{ color: 'var(--bloom-glow)' }}
+              onClick={generateLetter}
+              disabled={loading}
+            >
               {loading ? 'Regenerating...' : 'Regenerate'}
             </button>
           </div>
-          {isDemoMode && <p className="text-xs text-warm-400">Tailored from this demo profile's symptoms, patterns, goals, and doctor-prep report.</p>}
-          {error && <p className="text-xs text-warm-400">{error}</p>}
+          {isDemoMode && <p className="text-xs" style={{ color: 'var(--bloom-muted)' }}>Tailored from this demo profile's symptoms, patterns, goals, and doctor-prep report.</p>}
+          {error && <p className="text-xs" style={{ color: 'var(--bloom-muted)' }}>{error}</p>}
         </>
       ) : (
         <div className="space-y-3">
-          {error && <p className="text-warm-600 leading-relaxed text-sm">{error}</p>}
+          {error && <p className="leading-relaxed text-sm" style={{ color: 'var(--bloom-text)' }}>{error}</p>}
           <div className="flex flex-wrap items-center gap-3">
-            <button type="button" className="btn-bloom" onClick={generateLetter} disabled={loading || !currentUser}>
+            <button
+              type="button"
+              className="px-5 py-2.5 font-medium"
+              style={{ background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', color: 'white', borderRadius: 14 }}
+              onClick={generateLetter}
+              disabled={loading || !currentUser}
+            >
               {loading ? 'Writing your letter...' : `Generate your ${monthName} letter`}
             </button>
-            <button type="button" className="text-sm text-bloom-500 font-medium flex items-center gap-2" onClick={downloadLetter} disabled={!currentUser}>
+            <button
+              type="button"
+              className="text-sm font-medium flex items-center gap-2"
+              style={{ color: 'var(--bloom-glow)' }}
+              onClick={downloadLetter}
+              disabled={!currentUser}
+            >
               <Download size={16} /> Download
             </button>
           </div>
-          {isDemoMode && <p className="text-xs text-warm-400">Demo letters use the selected profile's symptoms, patterns, goals, and doctor-prep report.</p>}
+          {isDemoMode && <p className="text-xs" style={{ color: 'var(--bloom-muted)' }}>Demo letters use the selected profile's symptoms, patterns, goals, and doctor-prep report.</p>}
         </div>
       )}
     </div>

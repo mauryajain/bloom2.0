@@ -1,8 +1,3 @@
-// ============================================================
-// BLOOM — App Shell Layout
-// Agent 1 (Full-Stack Lead)
-// ============================================================
-
 import Sidebar from './Sidebar';
 import Dashboard from '../dashboard/Dashboard';
 import SymptomJournal from '../symptoms/SymptomJournal';
@@ -31,10 +26,13 @@ export default function AppShell() {
   const ViewComponent = views[currentView] || Dashboard;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ background: 'var(--bloom-void)' }}>
       <Sidebar />
-      <main className="md:ml-64 min-h-screen p-4 md:p-8 pt-16 md:pt-8 main-content">
-        <div className="max-w-6xl mx-auto animate-[fade-in_0.5s_ease-out]">
+      <main
+        className="md:ml-[72px] min-h-screen p-4 md:p-8 pt-16 md:pt-8"
+        style={{ animation: 'bloom-fade-up 0.4s ease forwards' }}
+      >
+        <div className="max-w-6xl mx-auto" style={{ animation: 'bloom-fade-up 0.4s ease forwards' }}>
           <ViewComponent />
         </div>
       </main>

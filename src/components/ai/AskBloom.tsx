@@ -5,18 +5,58 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
 import { askBloomAI, checkEmergencySymptoms } from '../../utils/aiEngine';
-import { Send, Sparkles, AlertTriangle, ShieldCheck, Wifi, WifiOff, Activity, Zap, TrendingUp } from 'lucide-react';
-import BloomAvatar from './BloomAvatar';
+import { ArrowUp, AlertTriangle, Wifi, WifiOff, Activity, TrendingUp } from 'lucide-react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
+function BloomPetalFlower({ size = 36, isTyping = false }: { size?: number; isTyping?: boolean }) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const petalRx = size * 0.12;
+  const petalRy = size * 0.32;
+  const offset = size * 0.24;
+
+  const petals = Array.from({ length: 6 }, (_, i) => {
+    const angle = (i * 60 * Math.PI) / 180;
+    const petalCx = cx + Math.sin(angle) * offset;
+    const petalCy = cy - Math.cos(angle) * offset;
+    return (
+      <ellipse
+        key={i}
+        cx={petalCx}
+        cy={petalCy}
+        rx={petalRx}
+        ry={petalRy}
+        transform={`rotate(${i * 60}, ${petalCx}, ${petalCy})`}
+        fill="#a78bfa"
+        opacity={0.85}
+      />
+    );
+  });
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className={isTyping ? 'animate-spin' : ''}
+      style={isTyping ? { animationDuration: '1.5s' } : undefined}
+    >
+      {petals}
+      <circle cx={cx} cy={cy} r={size * 0.1} fill="#14b8a6" />
+    </svg>
+  );
+}
 
 export default function AskBloom() {
   const { conversations, symptomLogs, addConversationMessage, isDemoMode, userProfile, currentUser } = useBloomStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [crackedPod, setCrackedPod] = useState<string | null>(null);
+  const [inputFocused, setInputFocused] = useState(false);
+  const [sendHovered, setSendHovered] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Find the conversation for the currently logged-in user
+
   const conv = conversations.find(c => c.userId === currentUser?.id) || conversations[0];
   const chatIsEmpty = !conv || conv.messages.length === 0;
 
@@ -95,7 +135,6 @@ export default function AskBloom() {
     if (!input.trim() || !conv) return;
     const userInput = input.trim();
 
-    // Emergency check (client-side fast path)
     const emergency = checkEmergencySymptoms([userInput]);
     if (emergency) {
       addConversationMessage(conv.id, {
@@ -117,7 +156,6 @@ export default function AskBloom() {
     setAiError('');
 
     try {
-      // Real users → Edge Function; demo users → mock
       let response;
       if (isDemoMode) {
         await new Promise(r => setTimeout(r, 1200));
@@ -156,15 +194,24 @@ export default function AskBloom() {
     ...suggestions,
   ].slice(0, 5);
 
+  const handlePodClick = (text: string) => {
+    setCrackedPod(text);
+    setTimeout(() => {
+      setCrackedPod(null);
+      setInput(text);
+    }, 300);
+  };
+
   return (
-    <div className="space-y-4 flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
-      <div className="flex items-center gap-3">
-        <BloomAvatar size="lg" isTyping={isTyping} />
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <BloomPetalFlower size={48} />
         <div>
-          <h1 className="text-2xl font-bold font-[var(--font-display)]">
+          <h1 className="text-2xl font-bold font-[var(--font-display)]" style={{ color: 'var(--bloom-text)' }}>
             Ask Bloom
           </h1>
-          <p className="text-warm-400 text-sm mt-1">
+          <p className="text-sm mt-1" style={{ color: 'var(--bloom-muted)' }}>
             AI-powered health insights {userProfile ? `personalised for ${userProfile.nickname}` : 'based on your data'}
           </p>
         </div>
@@ -172,87 +219,165 @@ export default function AskBloom() {
 
       {/* Status indicator */}
       {!isDemoMode && (
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs ${
-          isConfigured ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
-        }`}>
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs mb-3"
+          style={{
+            backgroundColor: isConfigured ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)',
+            color: 'var(--bloom-text)',
+            border: isConfigured ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(245,158,11,0.3)',
+          }}
+        >
           {isConfigured ? <Wifi size={12} /> : <WifiOff size={12} />}
           {isConfigured
-            ? 'Connected to Bloom AI - responses are personalised to your profile'
-            : 'Demo mode - connect Bloom services for personalised AI responses'}
+            ? 'Connected to Bloom AI — responses are personalised to your profile'
+            : 'Demo mode — connect Bloom services for personalised AI responses'}
         </div>
       )}
 
-      <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs">
-        <ShieldCheck size={16} className="text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-amber-800">
+      {/* Disclaimer banner */}
+      <div
+        className="flex items-start gap-2 p-3 rounded-lg text-xs mb-3"
+        style={{
+          borderLeft: '2px solid var(--bloom-amber)',
+          background: 'transparent',
+          color: 'var(--bloom-muted)',
+          fontStyle: 'italic',
+        }}
+      >
+        <AlertTriangle size={14} style={{ color: 'var(--bloom-amber)' }} className="shrink-0 mt-0.5" />
+        <p>
           <strong>Important:</strong> Bloom provides pattern observations, not medical diagnoses.
           Always consult a healthcare professional for medical advice.
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+      {/* Chat area */}
+      <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
         {chatIsEmpty && (
           <div className="space-y-4">
-            <div className="glass-card p-4">
+            {/* Recent Patterns card */}
+            <div
+              className="p-4 rounded-xl"
+              style={{
+                backgroundColor: 'var(--bloom-surface)',
+                border: '1px solid var(--bloom-border)',
+              }}
+            >
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <h2 className="font-semibold flex items-center gap-2">
-                    <Activity size={16} className="text-bloom-500" /> Your Recent Patterns
+                  <h2 className="font-semibold flex items-center gap-2" style={{ color: 'var(--bloom-text)' }}>
+                    <Activity size={16} style={{ color: 'var(--bloom-amber)' }} /> Your Recent Patterns
                   </h2>
-                  <p className="text-xs text-warm-400 mt-1">Last 30 days of logged symptoms</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--bloom-muted)' }}>Last 30 days of logged symptoms</p>
                 </div>
-                <span className="badge badge-bloom">{recentLogs.length} logs</span>
+                <span
+                  className="text-xs font-medium px-2 py-1 rounded-full"
+                  style={{
+                    backgroundColor: 'var(--bloom-lift)',
+                    color: 'var(--bloom-text)',
+                    border: '1px solid var(--bloom-border)',
+                  }}
+                >
+                  {recentLogs.length} logs
+                </span>
               </div>
 
               {trendData.length > 0 ? (
                 <div className="h-36">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trendData}>
-                      <XAxis dataKey="date" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={18} />
+                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--bloom-muted)' }} axisLine={false} tickLine={false} minTickGap={18} />
                       <Tooltip
-                        contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.1)', fontSize: 12 }}
+                        contentStyle={{
+                          borderRadius: 12,
+                          border: '1px solid var(--bloom-border)',
+                          background: 'var(--bloom-surface)',
+                          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+                          fontSize: 12,
+                          color: 'var(--bloom-text)',
+                        }}
                       />
-                      <Area type="monotone" dataKey="severity" stroke="#a855f7" fill="#f3e8ff" strokeWidth={2} name="Avg severity" />
-                      <Area type="monotone" dataKey="energy" stroke="#22c55e" fill="#dcfce7" strokeWidth={2} name="Energy" />
+                      <Area type="monotone" dataKey="severity" stroke="#a855f7" fill="rgba(168,85,247,0.15)" strokeWidth={2} name="Avg severity" />
+                      <Area type="monotone" dataKey="energy" stroke="#22c55e" fill="rgba(34,197,94,0.15)" strokeWidth={2} name="Energy" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="rounded-xl bg-warm-50 p-4 text-sm text-warm-500">
+                <div
+                  className="rounded-xl p-4 text-sm"
+                  style={{
+                    backgroundColor: 'var(--bloom-lift)',
+                    color: 'var(--bloom-muted)',
+                    border: '1px solid var(--bloom-border)',
+                  }}
+                >
                   Log a few symptoms and Bloom will summarize your recent severity, energy, and mood patterns here.
                 </div>
               )}
             </div>
 
+            {/* Noticeable Patterns */}
             <div>
-              <h3 className="font-semibold text-sm flex items-center gap-2 mb-2">
-                <TrendingUp size={15} className="text-amber-500" /> Noticeable Patterns
+              <h3 className="font-semibold text-sm flex items-center gap-2 mb-2" style={{ color: 'var(--bloom-text)' }}>
+                <TrendingUp size={15} style={{ color: 'var(--bloom-amber)' }} /> Noticeable Patterns
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 {noticeablePatterns.map(pattern => (
-                  <div key={pattern} className="p-3 rounded-xl bg-white/70 border border-warm-100 text-sm text-warm-700">
+                  <div
+                    key={pattern}
+                    className="text-sm p-3 rounded-xl"
+                    style={{
+                      backgroundColor: 'var(--bloom-surface)',
+                      border: '1px solid var(--bloom-border)',
+                      color: 'var(--bloom-text)',
+                    }}
+                  >
                     {pattern}
                   </div>
                 ))}
                 {noticeablePatterns.length === 0 && (
-                  <div className="p-3 rounded-xl bg-white/70 border border-warm-100 text-sm text-warm-500">
+                  <div
+                    className="text-sm p-3 rounded-xl"
+                    style={{
+                      backgroundColor: 'var(--bloom-surface)',
+                      border: '1px solid var(--bloom-border)',
+                      color: 'var(--bloom-muted)',
+                    }}
+                  >
                     Start logging symptoms to unlock personalized pattern notes.
                   </div>
                 )}
               </div>
             </div>
 
+            {/* Suggested Prompts */}
             <div>
-              <h3 className="font-semibold text-sm flex items-center gap-2 mb-2">
-                <Zap size={15} className="text-sage-500" /> Suggested Prompts
+              <h3 className="font-semibold text-sm flex items-center gap-2 mb-2" style={{ color: 'var(--bloom-text)' }}>
+                <TrendingUp size={15} style={{ color: 'var(--bloom-amber)' }} /> Suggested Prompts
               </h3>
               <div className="flex flex-wrap gap-2">
                 {emptyStatePrompts.map(prompt => (
                   <button
                     key={prompt}
-                    className="px-3 py-1.5 rounded-full text-xs bg-bloom-50 text-bloom-700 hover:bg-bloom-100 transition-all border border-bloom-200"
-                    onClick={() => setInput(prompt)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all"
+                    style={{
+                      backgroundColor: 'var(--bloom-lift)',
+                      border: '1px solid var(--bloom-border)',
+                      color: 'var(--bloom-text)',
+                      transform: crackedPod === prompt ? 'scale(1.05)' : 'scale(1)',
+                      opacity: crackedPod === prompt ? 0.7 : 1,
+                    }}
+                    onClick={() => handlePodClick(prompt)}
                   >
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--bloom-amber)',
+                      }}
+                    />
                     {prompt}
                   </button>
                 ))}
@@ -260,67 +385,164 @@ export default function AskBloom() {
             </div>
           </div>
         )}
+
+        {/* Messages */}
         {conv?.messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={msg.isEmergency ? 'chat-assistant border-2 border-rose-300 bg-rose-50' : msg.role === 'user' ? 'chat-user' : 'chat-assistant'}>
+            <div
+              className="max-w-[80%] p-3"
+              style={
+                msg.role === 'user'
+                  ? {
+                      background: 'linear-gradient(135deg, #a78bfa, #f43f5e)',
+                      color: 'white',
+                      borderRadius: '20px 20px 4px 20px',
+                    }
+                  : {
+                      backgroundColor: 'var(--bloom-surface)',
+                      border: msg.isEmergency ? '2px solid #f43f5e' : '1px solid var(--bloom-border)',
+                      borderRadius: '20px 20px 20px 4px',
+                      color: 'var(--bloom-text)',
+                    }
+              }
+            >
               {msg.role === 'assistant' && (
-                <div className="flex items-center gap-2 mb-2 text-bloom-600">
-                  <BloomAvatar size="sm" /> <span className="text-xs font-semibold">Bloom AI</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <BloomPetalFlower size={36} />
+                  <span className="text-xs font-semibold" style={{ color: 'var(--bloom-amber)' }}>Bloom AI</span>
                 </div>
               )}
               <div className="text-sm ai-content whitespace-pre-line">{msg.content}</div>
               {msg.disclaimer && (
-                <p className="text-[10px] text-warm-400 mt-2 flex items-center gap-1">
+                <p className="text-[10px] mt-2 flex items-center gap-1" style={{ color: 'var(--bloom-muted)', fontStyle: 'italic' }}>
                   <AlertTriangle size={10} /> {msg.disclaimer}
                 </p>
               )}
             </div>
           </div>
         ))}
+
+        {/* Typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
-            <div className="chat-assistant">
-              <div className="flex items-center gap-2 text-bloom-400">
-                <BloomAvatar size="sm" isTyping={true} />
-                <span className="text-sm">Bloom is thinking...</span>
+            <div
+              className="p-3"
+              style={{
+                backgroundColor: 'var(--bloom-surface)',
+                border: '1px solid var(--bloom-border)',
+                borderRadius: '20px 20px 20px 4px',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <BloomPetalFlower size={36} isTyping={true} />
+                <span className="text-sm" style={{ color: 'var(--bloom-muted)' }}>Bloom is thinking...</span>
               </div>
             </div>
           </div>
         )}
+
+        {/* Error */}
         {aiError && (
           <div className="flex justify-start">
-            <div className="chat-assistant border border-rose-200 bg-rose-50">
-              <p className="text-sm text-rose-600">{aiError}</p>
+            <div
+              className="p-3 text-sm"
+              style={{
+                backgroundColor: 'rgba(244,63,94,0.1)',
+                border: '1px solid rgba(244,63,94,0.3)',
+                borderRadius: '20px 20px 20px 4px',
+                color: '#f43f5e',
+              }}
+            >
+              {aiError}
             </div>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Suggested questions (bottom chips / seed pods) */}
       {conv && !chatIsEmpty && conv.messages.length <= 2 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-3" style={{ scrollbarWidth: 'none' }}>
           {suggestions.map(s => (
             <button
               key={s}
-              className="px-3 py-1.5 rounded-full text-xs bg-bloom-50 text-bloom-700 hover:bg-bloom-100 transition-all border border-bloom-200"
-              onClick={() => setInput(s)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all shrink-0"
+              style={{
+                backgroundColor: 'var(--bloom-lift)',
+                border: '1px solid var(--bloom-border)',
+                color: 'var(--bloom-text)',
+                transform: crackedPod === s ? 'scale(1.05)' : 'scale(1)',
+                opacity: crackedPod === s ? 0.7 : 1,
+              }}
+              onClick={() => handlePodClick(s)}
             >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--bloom-amber)',
+                }}
+              />
               {s}
             </button>
           ))}
         </div>
       )}
 
-      <div className="flex gap-3">
+      {/* Input bar */}
+      <div
+        className="flex items-center gap-2 px-3 py-2"
+        style={{
+          backgroundColor: 'var(--bloom-surface)',
+          border: '1px solid var(--bloom-border)',
+          borderRadius: 16,
+          boxShadow: inputFocused ? '0 0 0 3px rgba(124,58,237,0.25)' : 'none',
+          transition: 'box-shadow 0.2s ease',
+        }}
+      >
+        <BloomPetalFlower size={20} />
         <input
-          className="bloom-input flex-1"
+          className="flex-1 bg-transparent text-sm outline-none placeholder-[var(--bloom-muted)]"
+          style={{ color: 'var(--bloom-text)' }}
           placeholder="Ask Bloom anything about your health patterns..."
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
         />
-        <button className="btn-bloom px-4" onClick={handleSend} disabled={!input.trim() || isTyping}>
-          <Send size={18} />
+        <button
+          className="flex items-center justify-center shrink-0"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #a78bfa, #f43f5e)',
+            border: 'none',
+            cursor: input.trim() && !isTyping ? 'pointer' : 'not-allowed',
+            opacity: input.trim() && !isTyping ? 1 : 0.4,
+          }}
+          onClick={handleSend}
+          disabled={!input.trim() || isTyping}
+          onMouseEnter={() => setSendHovered(true)}
+          onMouseLeave={() => setSendHovered(false)}
+        >
+          <ArrowUp
+            size={18}
+            color="white"
+            style={{
+              transform: sendHovered ? 'rotate(0deg)' : 'rotate(45deg)',
+              transition: 'transform 0.2s ease',
+            }}
+          />
         </button>
       </div>
     </div>

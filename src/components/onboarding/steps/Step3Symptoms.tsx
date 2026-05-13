@@ -1,4 +1,3 @@
-// Step 3 — Symptoms & Duration
 import type { OnboardingData } from '../../../types';
 
 interface Props {
@@ -70,13 +69,12 @@ export default function Step3Symptoms({ data, onUpdate, onNext, onBack }: Props)
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold mb-1">Your symptoms</h3>
-        <p className="text-warm-400 text-sm">Select all that apply. This helps Bloom understand your health baseline.</p>
+        <h3 className="text-xl font-bold mb-1" style={{fontFamily:'var(--font-heading)'}}>Your symptoms</h3>
+        <p className="text-sm" style={{color:'var(--bloom-muted)'}}>Select all that apply. This helps Bloom understand your health baseline.</p>
       </div>
 
-      {/* Symptom Grid */}
       <div>
-        <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-3 block">
+        <label className="text-xs font-semibold uppercase tracking-wide mb-3 block" style={{color:'var(--bloom-muted)'}}>
           Which symptoms have you been experiencing? ({data.symptoms.length} selected)
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -85,33 +83,32 @@ export default function Step3Symptoms({ data, onUpdate, onNext, onBack }: Props)
             return (
               <button
                 key={s.name}
-                className={`p-3 rounded-xl text-left text-sm transition-all border-2 ${
-                  selected
-                    ? 'border-bloom-400 bg-bloom-50 shadow-sm'
-                    : 'border-transparent bg-white/60 hover:border-bloom-200'
-                }`}
+                className="p-3 rounded-xl text-left text-sm transition-all border-2"
+                style={selected
+                  ? {borderColor:'var(--bloom-glow)', background:'var(--bloom-lift)', color:'var(--bloom-text)'}
+                  : {borderColor:'transparent', background:'var(--bloom-surface)', color:'var(--bloom-text)'}
+                }
                 onClick={() => toggle(s.name)}
               >
                 <span className="mr-2">{s.emoji}</span>
-                <span className={selected ? 'font-semibold text-bloom-700' : 'text-warm-700'}>{s.name}</span>
+                <span style={selected ? {fontWeight:600, color:'var(--bloom-glow)'} : {}}>{s.name}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Duration */}
       <div>
-        <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2 block">How long have you been experiencing these symptoms?</label>
+        <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{color:'var(--bloom-muted)'}}>How long have you been experiencing these symptoms?</label>
         <div className="flex flex-wrap gap-2">
           {DURATIONS.map(d => (
             <button
               key={d}
-              className={`px-4 py-2 rounded-full text-sm transition-all font-medium ${
-                data.symptomDuration === d
-                  ? 'bg-bloom-500 text-white shadow-bloom'
-                  : 'bg-white/60 border border-warm-200 text-warm-600 hover:border-bloom-300'
-              }`}
+              className="px-4 py-2 rounded-full text-sm transition-all font-medium"
+              style={data.symptomDuration === d
+                ? {background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', border:'none', color:'#fff', boxShadow:'0 0 15px rgba(124,58,237,0.3)'}
+                : {background:'var(--bloom-surface)', border:'1px solid var(--bloom-border)', color:'var(--bloom-text)'}
+              }
               onClick={() => onUpdate({ symptomDuration: d })}
             >
               {d}
@@ -120,20 +117,19 @@ export default function Step3Symptoms({ data, onUpdate, onNext, onBack }: Props)
         </div>
       </div>
 
-      {/* Dismissal History */}
       <div>
-        <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2 block">
-          Have healthcare providers dismissed your concerns? <span className="font-normal normal-case text-warm-400">(optional)</span>
+        <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{color:'var(--bloom-muted)'}}>
+          Have healthcare providers dismissed your concerns? <span className="font-normal normal-case" style={{color:'var(--bloom-muted)'}}>(optional)</span>
         </label>
         <div className="space-y-2">
           {DISMISSAL_OPTIONS.map(o => (
             <button
               key={o}
-              className={`w-full p-3 rounded-xl text-left text-sm transition-all border-2 ${
-                data.dismissalHistory.includes(o)
-                  ? 'border-bloom-400 bg-bloom-50'
-                  : 'border-transparent bg-white/60 hover:border-warm-200'
-              }`}
+              className="w-full p-3 rounded-xl text-left text-sm transition-all border-2"
+              style={data.dismissalHistory.includes(o)
+                ? {borderColor:'var(--bloom-glow)', background:'var(--bloom-lift)', color:'var(--bloom-text)'}
+                : {borderColor:'transparent', background:'var(--bloom-surface)', color:'var(--bloom-text)'}
+              }
               onClick={() => toggleDismissal(o)}
             >
               {data.dismissalHistory.includes(o) ? '✓ ' : ''}{o}
@@ -143,8 +139,28 @@ export default function Step3Symptoms({ data, onUpdate, onNext, onBack }: Props)
       </div>
 
       <div className="flex gap-3">
-        <button className="btn-bloom-outline" onClick={onBack}>← Back</button>
-        <button className="btn-bloom flex-1" onClick={onNext} disabled={!canNext}>Continue →</button>
+        <button
+          className="flex-1 font-semibold py-3"
+          style={{background:'transparent', border:'1px solid var(--bloom-border)', borderRadius:14, color:'var(--bloom-text)', cursor:'pointer'}}
+          onClick={onBack}
+        >
+          ← Back
+        </button>
+        <button
+          className="flex-1 font-semibold py-3"
+          style={{
+            background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))',
+            border:'none',
+            borderRadius:14,
+            color:'#fff',
+            cursor: canNext ? 'pointer' : 'not-allowed',
+            opacity: canNext ? 1 : 0.5
+          }}
+          onClick={onNext}
+          disabled={!canNext}
+        >
+          Continue →
+        </button>
       </div>
     </div>
   );

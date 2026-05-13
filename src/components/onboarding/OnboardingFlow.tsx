@@ -1,8 +1,3 @@
-// ============================================================
-// BLOOM — Onboarding Flow Master Controller
-// Manages 6-step questionnaire with progress, validation, and DB submit
-// ============================================================
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBloomStore } from '../../store/useBloomStore';
@@ -88,29 +83,32 @@ export default function OnboardingFlow() {
     navigate('/dashboard');
   };
 
-  // ---- "Your Bloom is ready" confirmation ----
   if (done) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 text-center">
-        <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-bloom-400 to-rose-400 flex items-center justify-center shadow-bloom mb-6 animate-[bloom_0.6s_ease-out]">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 text-center" style={{background:'var(--bloom-void)', color:'var(--bloom-text)'}}>
+        <div className="w-28 h-28 rounded-3xl flex items-center justify-center mb-6" style={{background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', boxShadow:'0 0 30px rgba(124,58,237,0.3)'}}>
           <Flower2 size={56} className="text-white" />
         </div>
-        <h1 className="text-3xl font-bold font-[var(--font-display)] gradient-text mb-3">
-          Your Bloom is ready 🌸
+        <h1 className="text-3xl font-bold" style={{fontFamily:'var(--font-heading)', color:'var(--bloom-glow)'}}>
+          Your Bloom is ready
         </h1>
-        <p className="text-warm-500 max-w-sm mb-8 leading-relaxed">
+        <p className="max-w-sm mb-8 leading-relaxed" style={{color:'var(--bloom-muted)'}}>
           Welcome, {data.nickname}! Your personalised health profile has been created.
           Bloom will use this to give you insights tailored specifically to you.
         </p>
-        <div className="glass-card p-5 max-w-sm w-full text-left mb-8 space-y-2">
-          <p className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-3">Your profile summary</p>
-          <p className="text-sm"><span className="text-warm-400">Life stage: </span><span className="font-medium">{data.lifeStage}</span></p>
-          <p className="text-sm"><span className="text-warm-400">Symptoms tracked: </span><span className="font-medium">{data.symptoms.length} selected</span></p>
-          <p className="text-sm"><span className="text-warm-400">Conditions: </span><span className="font-medium">{data.diagnosedConditions.length > 0 ? data.diagnosedConditions.join(', ') : 'None reported'}</span></p>
-          <p className="text-sm"><span className="text-warm-400">Goals: </span><span className="font-medium">{data.goals.length} selected</span></p>
-          <p className="text-sm"><span className="text-warm-400">AI style: </span><span className="font-medium capitalize">{data.communicationStyle}</span></p>
+        <div className="p-5 max-w-sm w-full text-left mb-8 space-y-2" style={{background:'var(--bloom-surface)', border:'1px solid var(--bloom-border)', borderRadius:20}}>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{color:'var(--bloom-muted)'}}>Your profile summary</p>
+          <p className="text-sm" style={{color:'var(--bloom-text)'}}><span style={{color:'var(--bloom-muted)'}}>Life stage: </span><span className="font-medium">{data.lifeStage}</span></p>
+          <p className="text-sm" style={{color:'var(--bloom-text)'}}><span style={{color:'var(--bloom-muted)'}}>Symptoms tracked: </span><span className="font-medium">{data.symptoms.length} selected</span></p>
+          <p className="text-sm" style={{color:'var(--bloom-text)'}}><span style={{color:'var(--bloom-muted)'}}>Conditions: </span><span className="font-medium">{data.diagnosedConditions.length > 0 ? data.diagnosedConditions.join(', ') : 'None reported'}</span></p>
+          <p className="text-sm" style={{color:'var(--bloom-text)'}}><span style={{color:'var(--bloom-muted)'}}>Goals: </span><span className="font-medium">{data.goals.length} selected</span></p>
+          <p className="text-sm" style={{color:'var(--bloom-text)'}}><span style={{color:'var(--bloom-muted)'}}>AI style: </span><span className="font-medium capitalize">{data.communicationStyle}</span></p>
         </div>
-        <button className="btn-bloom px-8 text-base" onClick={handleEnterBloom}>
+        <button
+          className="px-8 text-base font-semibold py-3"
+          style={{background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', border:'none', borderRadius:14, color:'#fff', cursor:'pointer'}}
+          onClick={handleEnterBloom}
+        >
           Enter Bloom →
         </button>
       </div>
@@ -120,29 +118,26 @@ export default function OnboardingFlow() {
   const stepProps = { data, onUpdate: update, onNext: handleNext, onBack: handleBack };
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-8">
+    <div className="min-h-screen flex flex-col items-center px-4 py-8" style={{background:'var(--bloom-void)', color:'var(--bloom-text)'}}>
       <div className="w-full max-w-xl">
 
-        {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-bloom-400 to-rose-400 flex items-center justify-center shadow-bloom">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', boxShadow:'0 0 20px rgba(124,58,237,0.3)'}}>
             <Flower2 size={22} className="text-white" />
           </div>
           <div>
-            <p className="text-xs text-warm-400 font-medium uppercase tracking-wide">Step {step} of {TOTAL_STEPS}</p>
-            <h2 className="font-bold text-lg font-[var(--font-display)]">{STEP_TITLES[step - 1]}</h2>
+            <p className="text-xs font-medium uppercase tracking-wide" style={{color:'var(--bloom-muted)'}}>Step {step} of {TOTAL_STEPS}</p>
+            <h2 className="font-bold text-lg" style={{fontFamily:'var(--font-heading)'}}>{STEP_TITLES[step - 1]}</h2>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full h-2 bg-warm-100 rounded-full mb-8 overflow-hidden">
+        <div className="w-full h-2 rounded-full mb-8 overflow-hidden" style={{background:'var(--bloom-lift)'}}>
           <div
-            className="h-full bg-gradient-to-r from-bloom-400 to-rose-400 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
+            className="h-full rounded-full transition-all duration-500"
+            style={{width: `${progress}%`, background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))'}}
           />
         </div>
 
-        {/* Step Content */}
         <div className="animate-[slide-up_0.3s_ease-out]">
           {step === 1 && <Step1Identity {...stepProps} />}
           {step === 2 && <Step2LifeStage {...stepProps} />}

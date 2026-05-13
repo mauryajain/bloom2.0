@@ -29,9 +29,9 @@ function Tooltip({ content, children }: { content: string; children: React.React
   return (
     <div className="relative group">
       {children}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-warm-800 text-white text-[11px] leading-relaxed shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 w-56 text-center">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-[11px] leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 w-56 text-center" style={{background:'var(--bloom-lift)', border:'1px solid var(--bloom-border)', color:'var(--bloom-text)', boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>
         {content}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-warm-800" />
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent" style={{borderTopColor:'var(--bloom-lift)'}} />
       </div>
     </div>
   );
@@ -48,10 +48,10 @@ export default function Step4Conditions({ data, onUpdate, onNext, onBack }: Prop
     const c = data.familyHistory.filter(x => x !== 'None');
     onUpdate({ familyHistory: c.includes(name) ? c.filter(x => x !== name) : [...c, name] });
   };
-  const Pill = ({ label, selected, color, onClick }: { label: string; selected: boolean; color: string; onClick: () => void }) => {
+  const Pill = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => {
     const isNone = label.startsWith('None');
     return (
-      <button onClick={onClick} className={`p-2.5 rounded-xl text-left text-xs transition-all border-2 ${selected ? `border-${color}-400 bg-${color}-50 font-semibold` : 'border-transparent bg-white/60 hover:border-warm-200'}`}>
+      <button onClick={onClick} className="p-2.5 rounded-xl text-left text-xs transition-all border-2" style={selected ? {borderColor:'var(--bloom-glow)', background:'var(--bloom-lift)', fontWeight:600, color:'var(--bloom-text)'} : {borderColor:'transparent', background:'var(--bloom-surface)', color:'var(--bloom-text)'}}>
         {selected ? '✓ ' : ''}
         {isNone ? label : (
           <Tooltip content={TOOLTIPS[label] || ''}>{label}</Tooltip>
@@ -61,30 +61,42 @@ export default function Step4Conditions({ data, onUpdate, onNext, onBack }: Prop
   };
   return (
     <div className="space-y-6">
-      <div><h3 className="text-xl font-bold mb-1">Conditions & family history</h3><p className="text-warm-400 text-sm">Optional — select only what you're comfortable sharing. Hover over any condition to learn more.</p></div>
+      <div><h3 className="text-xl font-bold mb-1" style={{fontFamily:'var(--font-heading)'}}>Conditions & family history</h3><p className="text-sm" style={{color:'var(--bloom-muted)'}}>Optional — select only what you're comfortable sharing. Hover over any condition to learn more.</p></div>
       <div>
-        <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2 block">Diagnosed conditions</label>
+        <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{color:'var(--bloom-muted)'}}>Diagnosed conditions</label>
         <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
           {[...CONDITIONS,'None of the above'].map(c => {
             const isNone = c === 'None of the above';
             const sel = isNone ? data.diagnosedConditions.length === 0 : data.diagnosedConditions.includes(c);
-            return <Pill key={c} label={c} selected={sel} color="bloom" onClick={() => toggleDiagnosed(isNone ? 'None' : c)} />;
+            return <Pill key={c} label={c} selected={sel} onClick={() => toggleDiagnosed(isNone ? 'None' : c)} />;
           })}
         </div>
       </div>
       <div>
-        <label className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2 block">Family history</label>
+        <label className="text-xs font-semibold uppercase tracking-wide mb-2 block" style={{color:'var(--bloom-muted)'}}>Family history</label>
         <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
           {[...CONDITIONS,'None of the above'].map(c => {
             const isNone = c === 'None of the above';
             const sel = isNone ? data.familyHistory.length === 0 : data.familyHistory.includes(c);
-            return <Pill key={c} label={c} selected={sel} color="rose" onClick={() => toggleFamily(isNone ? 'None' : c)} />;
+            return <Pill key={c} label={c} selected={sel} onClick={() => toggleFamily(isNone ? 'None' : c)} />;
           })}
         </div>
       </div>
       <div className="flex gap-3">
-        <button className="btn-bloom-outline" onClick={onBack}>← Back</button>
-        <button className="btn-bloom flex-1" onClick={onNext}>Continue →</button>
+        <button
+          className="flex-1 font-semibold py-3"
+          style={{background:'transparent', border:'1px solid var(--bloom-border)', borderRadius:14, color:'var(--bloom-text)', cursor:'pointer'}}
+          onClick={onBack}
+        >
+          ← Back
+        </button>
+        <button
+          className="flex-1 font-semibold py-3"
+          style={{background:'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', border:'none', borderRadius:14, color:'#fff', cursor:'pointer'}}
+          onClick={onNext}
+        >
+          Continue →
+        </button>
       </div>
     </div>
   );

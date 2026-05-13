@@ -1,16 +1,71 @@
-// ============================================================
-// BLOOM — Settings Page
-// Agent 1 (Full-Stack Lead)
-// ============================================================
-
+import { useState } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
-import { lifeStages } from '../../data/lifeStages';
-import { Settings, User, Bell, Shield, Palette, Stethoscope } from 'lucide-react';
+import { User, Palette, Info, Bell, Stethoscope, Shield } from 'lucide-react';
+
+const sections = [
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'preferences', label: 'Preferences', icon: Palette },
+  { id: 'about', label: 'About', icon: Info },
+] as const;
+
+const stageLabel = (stage: string) =>
+  stage.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+const petalColors = ['var(--bloom-glow)', 'var(--bloom-rose)', 'var(--bloom-glow)', 'var(--bloom-rose)', 'var(--bloom-glow)', 'var(--bloom-rose)'];
+
+function BloomFlower() {
+  return (
+    <div className="relative" style={{ width: 60, height: 60 }}>
+      {petalColors.map((color, i) => (
+        <div
+          key={i}
+          className="absolute"
+          style={{
+            bottom: '50%',
+            left: '50%',
+            width: 20,
+            height: 35,
+            transformOrigin: 'center bottom',
+            transform: `translateX(-50%) rotate(${i * 60}deg)`,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              background: color,
+              opacity: 0.7,
+            }}
+          />
+        </div>
+      ))}
+      <div
+        className="absolute"
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: '50%',
+          background: 'var(--bloom-teal)',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          boxShadow: '0 0 12px rgba(6, 214, 160, 0.5)',
+          zIndex: 2,
+        }}
+      />
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { currentUser, userProfile } = useBloomStore();
+  const [activeSection, setActiveSection] = useState('profile');
+  const [lifeStageAdaptive, setLifeStageAdaptive] = useState(true);
 
   if (!currentUser) return null;
+
+  const initials = (currentUser.name || '?').charAt(0).toUpperCase();
 
   const profile = {
     name: currentUser.name || userProfile?.nickname || '',
@@ -24,92 +79,322 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold font-[var(--font-display)] flex items-center gap-2">
-          <Settings className="text-bloom-500" size={24} /> Settings
-        </h1>
-        <p className="text-warm-400 text-sm mt-1">Manage your profile and preferences</p>
-      </div>
+    <div className="flex" style={{ minHeight: 'calc(100vh - 64px)' }}>
+      {/* Left Navigation Rail */}
+      <nav
+        className="w-[30%] shrink-0 sticky top-0 self-start flex flex-col gap-1"
+        style={{ padding: '40px 16px 0 24px' }}
+      >
+        {sections.map(s => {
+          const Icon = s.icon;
+          const isActive = activeSection === s.id;
+          return (
+            <button
+              key={s.id}
+              onClick={() => setActiveSection(s.id)}
+              className="flex items-center gap-3 w-full cursor-pointer"
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 14,
+                fontWeight: 500,
+                height: 44,
+                borderRadius: 12,
+                padding: '0 16px',
+                border: 'none',
+                background: isActive
+                  ? 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))'
+                  : 'transparent',
+                color: isActive ? '#ffffff' : 'var(--bloom-muted)',
+                textAlign: 'left',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--bloom-lift)';
+              }}
+              onMouseLeave={e => {
+                if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
+              }}
+            >
+              <Icon size={18} />
+              {s.label}
+            </button>
+          );
+        })}
+      </nav>
 
-      {/* Profile */}
-      <div className="glass-card p-6 space-y-4">
-        <h2 className="font-semibold flex items-center gap-2"><User size={16} className="text-bloom-500" /> Profile</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-medium text-warm-500 mb-1 block">Name</label>
-            <input className="bloom-input" value={profile.name} readOnly />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-warm-500 mb-1 block">Email</label>
-            <input className="bloom-input" value={profile.email} readOnly />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-warm-500 mb-1 block">Age</label>
-            <input className="bloom-input" value={profile.age} readOnly />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-warm-500 mb-1 block">Life Stage</label>
-            <select className="bloom-input" value={profile.lifeStage} disabled>
-              {lifeStages.map(ls => (
-                <option key={ls.stage} value={ls.stage}>
-                  {ls.stage.charAt(0).toUpperCase() + ls.stage.slice(1).replace('-', ' ')} ({ls.ageRange})
-                </option>
+      {/* Right Content Area */}
+      <div
+        className="flex-1 min-w-0 overflow-y-auto"
+        style={{
+          padding: '40px 40px 64px 0',
+          maxHeight: 'calc(100vh - 64px)',
+        }}
+      >
+        {/* ====== PROFILE SECTION ====== */}
+        {activeSection === 'profile' && (
+          <div className="flex flex-col gap-6">
+            {/* Avatar & Name */}
+            <div className="flex flex-col items-center gap-3" style={{ paddingBottom: 24, paddingTop: 8 }}>
+              <div
+                className="flex items-center justify-center text-white font-bold"
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))',
+                  border: '3px solid var(--bloom-border)',
+                  fontSize: 28,
+                  fontFamily: "'Fraunces', serif",
+                }}
+              >
+                {initials}
+              </div>
+              <h1
+                style={{
+                  fontFamily: "'Fraunces', serif",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: 'var(--bloom-text)',
+                  margin: 0,
+                }}
+              >
+                {profile.name}
+              </h1>
+              {profile.lifeStage && (
+                <span
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    padding: '4px 14px',
+                    borderRadius: 99,
+                    border: '1px solid var(--bloom-border)',
+                    background: 'var(--bloom-surface)',
+                    color: 'var(--bloom-muted)',
+                  }}
+                >
+                  {stageLabel(profile.lifeStage)}
+                </span>
+              )}
+            </div>
+
+            {/* Form Fields */}
+            <div className="flex flex-col gap-5">
+              {[
+                { label: 'Name', value: profile.name },
+                { label: 'Email', value: profile.email },
+                { label: 'Age', value: String(profile.age) },
+                { label: 'Life Stage', value: profile.lifeStage ? stageLabel(profile.lifeStage) : '-' },
+                { label: 'Avg Cycle Length', value: `${profile.cycleLength} days` },
+                { label: 'Communication Style', value: profile.communicationStyle.charAt(0).toUpperCase() + profile.communicationStyle.slice(1) },
+              ].map(field => (
+                <div key={field.label} className="flex flex-col gap-1.5">
+                  <label
+                    style={{
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: 'var(--bloom-muted)',
+                    }}
+                  >
+                    {field.label}
+                  </label>
+                  <input
+                    readOnly
+                    value={field.value}
+                    style={{
+                      width: '100%',
+                      height: 44,
+                      padding: '0 16px',
+                      background: 'var(--bloom-surface)',
+                      border: '1px solid var(--bloom-border)',
+                      borderRadius: 12,
+                      color: 'var(--bloom-text)',
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 14,
+                      outline: 'none',
+                      transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                      cursor: 'default',
+                    }}
+                    onFocus={e => {
+                      e.currentTarget.style.borderColor = 'var(--bloom-glow)';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.2)';
+                    }}
+                    onBlur={e => {
+                      e.currentTarget.style.borderColor = 'var(--bloom-border)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-warm-500 mb-1 block">Avg Cycle Length</label>
-            <input className="bloom-input" value={`${profile.cycleLength} days`} readOnly />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-warm-500 mb-1 block">Communication Style</label>
-            <input className="bloom-input capitalize" value={profile.communicationStyle} readOnly />
-          </div>
-        </div>
-        <p className="text-xs text-warm-400 italic">Profile editing is disabled in demo mode.</p>
-      </div>
+            </div>
 
-      {/* Preferences */}
-      <div className="glass-card p-6 space-y-4">
-        <h2 className="font-semibold flex items-center gap-2"><Palette size={16} className="text-bloom-500" /> Preferences</h2>
-        <div className="space-y-3">
-          <label className="flex items-center justify-between p-3 rounded-xl bg-warm-50">
-            <div className="flex items-center gap-2">
-              <Bell size={16} className="text-bloom-500" />
-              <span className="text-sm">Reminder Preferences</span>
-            </div>
-            <span className="text-xs text-warm-500 text-right max-w-xs">
-              {profile.reminderPreferences.length > 0 ? profile.reminderPreferences.join(', ') : 'None selected'}
-            </span>
-          </label>
-          <label className="flex items-center justify-between p-3 rounded-xl bg-warm-50">
-            <div className="flex items-center gap-2">
-              <Stethoscope size={16} className="text-bloom-500" />
-              <span className="text-sm">Regular Doctor</span>
-            </div>
-            <span className="text-xs text-warm-500">{profile.hasDoctor ? 'Yes' : 'Not currently'}</span>
-          </label>
-          <label className="flex items-center justify-between p-3 rounded-xl bg-warm-50">
-            <div className="flex items-center gap-2">
-              <Shield size={16} className="text-bloom-500" />
-              <span className="text-sm">Life-Stage Adaptive UI</span>
-            </div>
-            <div className="w-10 h-6 bg-bloom-500 rounded-full relative cursor-pointer">
-              <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow" />
-            </div>
-          </label>
-        </div>
-      </div>
+            <p
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 12,
+                fontStyle: 'italic',
+                color: 'var(--bloom-muted)',
+                marginTop: 8,
+              }}
+            >
+              Profile editing is disabled in demo mode.
+            </p>
+          </div>
+        )}
 
-      {/* About */}
-      <div className="glass-card p-6">
-        <h2 className="font-semibold mb-2">About BLOOM</h2>
-        <p className="text-sm text-warm-500 leading-relaxed">
-          BLOOM is an AI-powered women's health companion that helps you track symptoms, detect patterns, and prepare for doctor visits.
-          Our AI analyzes your data to find meaningful patterns — never to diagnose. Always consult a healthcare professional for medical decisions.
-        </p>
-        <p className="text-xs text-warm-400 mt-3">Version 1.0.0 · Hackathon MVP · Built with ❤️</p>
+        {/* ====== PREFERENCES SECTION ====== */}
+        {activeSection === 'preferences' && (
+          <div className="flex flex-col">
+            {/* Reminder Preferences */}
+            <div>
+              <div className="flex items-center gap-4" style={{ padding: '16px 0' }}>
+                <Bell size={20} style={{ color: 'var(--bloom-glow)' }} />
+                <span
+                  className="flex-1"
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 14,
+                    color: 'var(--bloom-text)',
+                  }}
+                >
+                  Reminder Preferences
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 12,
+                    color: 'var(--bloom-muted)',
+                    textAlign: 'right',
+                    maxWidth: 200,
+                  }}
+                >
+                  {profile.reminderPreferences.length > 0
+                    ? profile.reminderPreferences.join(', ')
+                    : 'None selected'}
+                </span>
+              </div>
+              <hr style={{ margin: 0, border: 'none', height: 0.5, background: 'var(--bloom-border)' }} />
+            </div>
+
+            {/* Regular Doctor */}
+            <div>
+              <div className="flex items-center gap-4" style={{ padding: '16px 0' }}>
+                <Stethoscope size={20} style={{ color: 'var(--bloom-glow)' }} />
+                <span
+                  className="flex-1"
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 14,
+                    color: 'var(--bloom-text)',
+                  }}
+                >
+                  Regular Doctor
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 12,
+                    color: 'var(--bloom-muted)',
+                  }}
+                >
+                  {profile.hasDoctor ? 'Yes' : 'Not currently'}
+                </span>
+              </div>
+              <hr style={{ margin: 0, border: 'none', height: 0.5, background: 'var(--bloom-border)' }} />
+            </div>
+
+            {/* Life-Stage Adaptive UI */}
+            <div>
+              <div className="flex items-center gap-4" style={{ padding: '16px 0' }}>
+                <Shield size={20} style={{ color: 'var(--bloom-glow)' }} />
+                <span
+                  className="flex-1"
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 14,
+                    color: 'var(--bloom-text)',
+                  }}
+                >
+                  Life-Stage Adaptive UI
+                </span>
+                <button
+                  onClick={() => setLifeStageAdaptive(!lifeStageAdaptive)}
+                  className="cursor-pointer"
+                  style={{
+                    width: 48,
+                    height: 26,
+                    borderRadius: 99,
+                    border: 'none',
+                    padding: 0,
+                    position: 'relative',
+                    background: lifeStageAdaptive
+                      ? 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-teal))'
+                      : 'var(--bloom-lift)',
+                    transition: 'background 0.25s ease',
+                  }}
+                  aria-label="Toggle Life-Stage Adaptive UI"
+                >
+                  <div
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      background: '#ffffff',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                      position: 'absolute',
+                      top: 3,
+                      left: lifeStageAdaptive ? 25 : 3,
+                      transition: 'left 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    }}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====== ABOUT SECTION ====== */}
+        {activeSection === 'about' && (
+          <div
+            className="flex flex-col items-center gap-6"
+            style={{
+              padding: '48px 32px',
+              borderRadius: 16,
+              background: 'var(--bloom-void)',
+              border: '1px solid var(--bloom-border)',
+            }}
+          >
+            <BloomFlower />
+            <p
+              className="text-center max-w-md"
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 14,
+                color: 'var(--bloom-muted)',
+                lineHeight: 1.7,
+                margin: 0,
+              }}
+            >
+              BLOOM is an AI-powered women's health companion that helps you track symptoms,
+              detect patterns, and prepare for doctor visits. Our AI analyzes your data to find
+              meaningful patterns — never to diagnose. Always consult a healthcare professional
+              for medical decisions.
+            </p>
+            <p
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 12,
+                color: 'var(--bloom-muted)',
+                margin: 0,
+              }}
+            >
+              Version 1.0.0 · Hackathon MVP
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -13,10 +13,15 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-bloom-200 border-t-bloom-500 rounded-full animate-spin" />
-          <p className="text-warm-400 text-sm">Loading your Bloom...</p>
+      <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bloom-void)'}}>
+        <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'12px'}}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            border: '3px solid var(--bloom-border)',
+            borderTopColor: 'var(--bloom-glow)',
+            animation: 'spin 0.6s linear infinite'
+          }} />
+          <p style={{color: 'var(--bloom-muted)', fontSize: 14, fontFamily: 'var(--font-body)'}}>Loading your Bloom...</p>
         </div>
       </div>
     );
@@ -32,8 +37,16 @@ function OnboardingRoute({ children }: { children: React.ReactNode }) {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-bloom-200 border-t-bloom-500 rounded-full animate-spin" />
+      <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bloom-void)'}}>
+        <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'12px'}}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            border: '3px solid var(--bloom-border)',
+            borderTopColor: 'var(--bloom-glow)',
+            animation: 'spin 0.6s linear infinite'
+          }} />
+          <p style={{color: 'var(--bloom-muted)', fontSize: 14, fontFamily: 'var(--font-body)'}}>Loading your Bloom...</p>
+        </div>
       </div>
     );
   }

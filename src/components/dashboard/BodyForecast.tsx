@@ -1,55 +1,65 @@
 import { useState } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
-import { CloudSun, RefreshCw, AlertTriangle, Info, Zap, Brain, Moon } from 'lucide-react';
+import { CloudSun, RefreshCw, AlertTriangle, Info, Zap, Moon } from 'lucide-react';
 
-const riskColors: Record<string, { dot: string; bg: string; border: string; label: string }> = {
-  low: { dot: 'bg-sage-400', bg: 'bg-sage-50', border: 'border-sage-300', label: 'Low' },
-  moderate: { dot: 'bg-amber-400', bg: 'bg-amber-50', border: 'border-amber-300', label: 'Moderate' },
-  high: { dot: 'bg-rose-400', bg: 'bg-rose-50', border: 'border-rose-300', label: 'High' },
-  severe: { dot: 'bg-red-500', bg: 'bg-red-50', border: 'border-red-400', label: 'Severe' },
+const riskColorMap: Record<string, string> = {
+  low: 'var(--bloom-teal)',
+  moderate: 'var(--bloom-amber)',
+  high: 'var(--bloom-rose)',
+  severe: '#ef4444',
+};
+
+const riskDotClass: Record<string, string> = {
+  low: 'from-bloom-teal to-emerald-400',
+  moderate: 'from-bloom-amber to-amber-400',
+  high: 'from-bloom-rose to-rose-400',
+  severe: 'from-red-500 to-red-400',
 };
 
 function getSeverityIcon(risk: string) {
   switch (risk) {
     case 'severe': return <AlertTriangle size={14} className="text-red-500" />;
-    case 'high': return <AlertTriangle size={14} className="text-rose-500" />;
-    case 'moderate': return <Info size={14} className="text-amber-500" />;
-    default: return <CloudSun size={14} className="text-sage-500" />;
+    case 'high': return <AlertTriangle size={14} style={{ color: 'var(--bloom-rose)' }} />;
+    case 'moderate': return <Info size={14} style={{ color: 'var(--bloom-amber)' }} />;
+    default: return <CloudSun size={14} style={{ color: 'var(--bloom-teal)' }} />;
   }
 }
 
-function EnergyBar({ value }: { value: number }) {
-  const pct = (value / 10) * 100;
-  const color = value >= 7 ? 'bg-sage-400' : value >= 4 ? 'bg-amber-400' : 'bg-rose-400';
-  return (
-    <div className="flex items-center gap-1.5 mt-1">
-      <Zap size={10} className="text-warm-400" />
-      <div className="flex-1 h-1.5 rounded-full bg-warm-200 overflow-hidden">
-        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-[10px] font-medium text-warm-500">{value}</span>
-    </div>
-  );
+function getRiskLabel(risk: string) {
+  switch (risk) {
+    case 'severe': return 'Severe';
+    case 'high': return 'High';
+    case 'moderate': return 'Moderate';
+    default: return 'Low';
+  }
 }
 
 export default function BodyForecast() {
   const { bodyForecast, generateBodyForecast } = useBloomStore();
   const [loading, setLoading] = useState(false);
+  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
 
   if (!bodyForecast) {
     return (
-      <div className="glass-card p-6 text-center space-y-4">
+      <div
+        className="p-6 text-center space-y-4"
+        style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)', borderRadius: 20 }}
+      >
         <div className="flex justify-center">
-          <div className="w-14 h-14 rounded-full bg-bloom-50 flex items-center justify-center">
-            <CloudSun size={28} className="text-bloom-400" />
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center"
+            style={{ background: 'var(--bloom-lift)' }}
+          >
+            <CloudSun size={28} style={{ color: 'var(--bloom-glow)' }} />
           </div>
         </div>
         <div>
-          <h3 className="font-semibold text-lg">Your Body Forecast</h3>
-          <p className="text-sm text-warm-400 mt-1">Predict the upcoming week based on your tracked patterns.</p>
+          <h3 className="font-semibold text-lg" style={{ color: 'var(--bloom-text)' }}>Your Body Forecast</h3>
+          <p className="text-sm mt-1" style={{ color: 'var(--bloom-muted)' }}>Predict the upcoming week based on your tracked patterns.</p>
         </div>
         <button
-          className="btn-bloom text-sm flex items-center gap-2 mx-auto"
+          className="text-sm flex items-center gap-2 mx-auto px-5 py-2.5 font-medium"
+          style={{ background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', color: 'white', borderRadius: 14 }}
           onClick={async () => {
             setLoading(true);
             await generateBodyForecast();
@@ -66,11 +76,11 @@ export default function BodyForecast() {
 
   if (bodyForecast.days.length === 0) {
     return (
-      <div className="glass-card p-6">
-        <h3 className="font-semibold flex items-center gap-2 mb-3">
-          <CloudSun size={16} className="text-bloom-400" /> Your Body Forecast
+      <div className="p-6" style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)', borderRadius: 20 }}>
+        <h3 className="font-semibold flex items-center gap-2 mb-3" style={{ color: 'var(--bloom-text)' }}>
+          <CloudSun size={16} style={{ color: 'var(--bloom-glow)' }} /> Your Body Forecast
         </h3>
-        <div className="text-center py-6 text-warm-400">
+        <div className="text-center py-6" style={{ color: 'var(--bloom-muted)' }}>
           <p className="text-sm">{bodyForecast.overallWarning}</p>
           <p className="text-xs mt-2">{bodyForecast.disclaimer}</p>
         </div>
@@ -83,29 +93,17 @@ export default function BodyForecast() {
     return order.indexOf(d.riskLevel) > order.indexOf(max) ? d.riskLevel : max;
   }, 'low');
 
-  const warnColors: Record<string, string> = {
-    low: 'border-l-sage-400 bg-sage-50/50',
-    moderate: 'border-l-amber-400 bg-amber-50/50',
-    high: 'border-l-rose-400 bg-rose-50/50',
-    severe: 'border-l-red-500 bg-red-50/50',
-  };
-
-  const warnIcons: Record<string, string> = {
-    low: '🌤',
-    moderate: '⛅',
-    high: '⚠️',
-    severe: '🔴',
-  };
-
   return (
-    <div className="glass-card p-5 space-y-4">
+    <div className="p-5 space-y-4" style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)', borderRadius: 20 }}>
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <CloudSun size={18} className="text-bloom-400" /> Your Body Forecast: Next 7 Days
+        <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--bloom-text)' }}>
+          <CloudSun size={18} style={{ color: 'var(--bloom-glow)' }} /> Your Body Forecast: Next 7 Days
         </h2>
         <button
           type="button"
-          className="text-xs text-bloom-500 font-medium flex items-center gap-1 hover:text-bloom-600 transition-colors"
+          className="text-xs font-medium flex items-center gap-1 transition-colors"
+          style={{ color: 'var(--bloom-glow)' }}
           onClick={async () => {
             setLoading(true);
             await generateBodyForecast();
@@ -118,65 +116,157 @@ export default function BodyForecast() {
         </button>
       </div>
 
-      <div className={`p-3 rounded-lg border-l-4 text-sm ${warnColors[maxRisk]}`}>
-        <div className="flex items-start gap-2">
-          <span className="text-base mt-0.5">{warnIcons[maxRisk]}</span>
-          <div>
-            <p className="font-medium text-warm-700">{bodyForecast.overallWarning}</p>
-          </div>
+      {/* Overall warning banner */}
+      <div
+        className="p-3 rounded-lg text-sm flex items-start gap-2"
+        style={{
+          background: `color-mix(in srgb, ${riskColorMap[maxRisk]} 15%, transparent)`,
+          borderLeft: `3px solid ${riskColorMap[maxRisk]}`,
+        }}
+      >
+        <span className="text-base mt-0.5 shrink-0">
+          {maxRisk === 'severe' || maxRisk === 'high' ? '⚠️' : maxRisk === 'moderate' ? '⛅' : '🌤'}
+        </span>
+        <div>
+          <p className="font-medium" style={{ color: 'var(--bloom-text)' }}>{bodyForecast.overallWarning}</p>
         </div>
       </div>
 
+      {/* 7-Day Plant Stem Forecast */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
         {bodyForecast.days.map(day => {
-          const colors = riskColors[day.riskLevel] || riskColors.low;
-          const topSymptoms = day.predictedSymptoms.slice(0, 3);
+          const isHighest = day.riskLevel === maxRisk;
+          const riskColor = riskColorMap[day.riskLevel] || riskColorMap.low;
+          const topSymptoms = day.predictedSymptoms.slice(0, 4);
+          const isEmpty = topSymptoms.length === 0;
+
           return (
             <div
               key={day.date}
-              className={`rounded-xl border ${colors.border} ${colors.bg} p-3 flex flex-col gap-1.5`}
+              onMouseEnter={() => setHoveredDay(day.date)}
+              onMouseLeave={() => setHoveredDay(null)}
+              className="flex flex-col items-center py-3 px-1.5 cursor-pointer transition-all duration-300"
+              style={{
+                background: 'var(--bloom-surface)',
+                border: '1px solid var(--bloom-border)',
+                borderRadius: 16,
+                minHeight: hoveredDay === day.date ? '220px' : '130px',
+                transition: 'min-height 0.3s ease, box-shadow 0.3s ease',
+                ...(isHighest && {
+                  boxShadow: '0 0 24px rgba(244,63,94,0.25)',
+                }),
+              }}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-warm-700">{day.dayName}</span>
-                <span className="flex items-center gap-1">
-                  {getSeverityIcon(day.riskLevel)}
-                  <span className="text-[10px] font-medium text-warm-500">{colors.label}</span>
+              {/* Day name + risk */}
+              <div className="flex items-center gap-1 mb-2">
+                <span className="text-[11px] font-semibold" style={{ color: 'var(--bloom-text)' }}>
+                  {day.dayName}
+                </span>
+                <span className="text-[9px] font-medium" style={{ color: riskColor }}>
+                  {getRiskLabel(day.riskLevel)}
                 </span>
               </div>
 
-              <div className="flex-1 space-y-1">
-                {topSymptoms.map(sx => (
-                  <div key={sx.name} className="flex items-center justify-between">
-                    <span className="text-[10px] text-warm-600 truncate max-w-[80px]">{sx.name}</span>
-                    <span className="text-[9px] font-medium text-warm-400">
-                      {(sx.probability * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                ))}
-                {topSymptoms.length === 0 && (
-                  <span className="text-[10px] text-warm-400 italic">Clear day</span>
+              {/* Vertical stem with symptom bubbles */}
+              <div className="relative flex flex-col items-center flex-1 w-full pt-1">
+                {/* Stem line */}
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 rounded-full"
+                  style={{ background: 'var(--bloom-border)' }}
+                />
+
+                {isEmpty ? (
+                  <span className="text-[9px] italic z-10" style={{ color: 'var(--bloom-muted)' }}>
+                    Clear day
+                  </span>
+                ) : (
+                  topSymptoms.map((sx) => (
+                    <div
+                      key={sx.name}
+                      className="flex items-center gap-1.5 py-1 z-10"
+                      style={{ minHeight: 16 }}
+                    >
+                      {/* Bubble on stem */}
+                      <div
+                        className="w-2.5 h-2.5 rounded-full shrink-0 bg-gradient-to-b"
+                        style={{
+                          background: riskColor,
+                          opacity: Math.max(0.4, sx.probability + 0.2),
+                          boxShadow: hoveredDay === day.date ? `0 0 6px ${riskColor}` : 'none',
+                        }}
+                      />
+                      {/* Label on hover */}
+                      {hoveredDay === day.date && (
+                        <span
+                          className="text-[9px] whitespace-nowrap"
+                          style={{ color: 'var(--bloom-text)' }}
+                        >
+                          {sx.name}
+                          <span className="ml-0.5" style={{ color: 'var(--bloom-muted)' }}>
+                            {(sx.probability * 100).toFixed(0)}%
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  ))
                 )}
               </div>
 
-              <EnergyBar value={day.energyPrediction} />
+              {/* Energy bar - always visible */}
+              <div className="w-full mt-auto pt-2">
+                <div className="flex items-center gap-1">
+                  <Zap size={10} style={{ color: 'var(--bloom-muted)' }} />
+                  <div
+                    className="flex-1 h-1.5 rounded-full overflow-hidden"
+                    style={{ background: 'var(--bloom-lift)' }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${(day.energyPrediction / 10) * 100}%`,
+                        background:
+                          day.energyPrediction >= 7
+                            ? 'var(--bloom-teal)'
+                            : day.energyPrediction >= 4
+                              ? 'var(--bloom-amber)'
+                              : 'var(--bloom-rose)',
+                      }}
+                    />
+                  </div>
+                  <span className="text-[9px] font-medium" style={{ color: 'var(--bloom-muted)' }}>
+                    {day.energyPrediction}
+                  </span>
+                </div>
+              </div>
 
-              <span className="text-[9px] text-warm-400 italic leading-tight mt-0.5">
-                {day.recommendation}
-              </span>
+              {/* Recommendation on hover */}
+              {hoveredDay === day.date && (
+                <span
+                  className="text-[8px] italic leading-tight text-center mt-1.5 px-1"
+                  style={{ color: 'var(--bloom-muted)' }}
+                >
+                  {day.recommendation}
+                </span>
+              )}
             </div>
           );
         })}
       </div>
 
+      {/* Key Recommendations */}
       {bodyForecast.keyRecommendations.length > 0 && (
-        <div className="rounded-lg bg-warm-50 p-3">
-          <h4 className="text-xs font-semibold text-warm-600 mb-2 flex items-center gap-1.5">
-            <Brain size={12} /> Key Recommendations
+        <div className="rounded-lg p-3" style={{ background: 'var(--bloom-lift)' }}>
+          <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: 'var(--bloom-text)' }}>
+            Key Recommendations
           </h4>
           <ul className="space-y-1">
             {bodyForecast.keyRecommendations.map((rec, i) => (
-              <li key={i} className="text-xs text-warm-600 flex items-start gap-2">
-                <span className="text-bloom-400 mt-0.5 shrink-0">•</span>
+              <li
+                key={i}
+                className="text-xs flex items-start gap-2"
+                style={{ color: 'var(--bloom-muted)' }}
+              >
+                <span style={{ color: 'var(--bloom-glow)', marginTop: 2, flexShrink: 0 }}>•</span>
                 {rec}
               </li>
             ))}
@@ -184,7 +274,11 @@ export default function BodyForecast() {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 text-[10px] text-warm-400">
+      {/* Disclaimer */}
+      <div
+        className="flex items-center gap-1.5 text-[10px]"
+        style={{ color: 'var(--bloom-muted)' }}
+      >
         <Moon size={10} />
         <span>{bodyForecast.disclaimer}</span>
       </div>

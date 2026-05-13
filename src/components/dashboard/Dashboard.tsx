@@ -1,18 +1,14 @@
-// ============================================================
-// BLOOM — Dashboard
-// Agent 1 (Full-Stack) + Agent 3 (UI/UX) — Main Dashboard View
-// ============================================================
-
 import { useMemo, useState } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
 import { format, subDays, parseISO } from 'date-fns';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, Radar
+  BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, Radar,
+  CartesianGrid
 } from 'recharts';
 import {
   Activity, TrendingUp, Calendar, AlertTriangle,
-  Heart, Moon, Zap, Flower2
+  Heart, Moon, Zap, Flower2, Plus
 } from 'lucide-react';
 import { getLifeStageInfo } from '../../data/lifeStages';
 import BloomLetter from './BloomLetter';
@@ -70,33 +66,67 @@ function StageTransitionBanner({
   };
 
   return (
-    <div className="glass-card p-4 border-l-4 border-l-amber-400">
+    <div style={{
+      background: 'var(--bloom-surface)',
+      borderLeft: '4px solid var(--bloom-amber)',
+      borderRadius: '0 16px 16px 0',
+      padding: 16,
+    }}>
       <div className="flex items-start gap-3">
-        <span className="text-xl mt-0.5">🌸</span>
+        <span style={{ fontSize: 20, marginTop: 2 }}>🌸</span>
         <div className="flex-1">
-          <p className="text-sm text-warm-600">{transition.message}</p>
-          <button className="text-sm text-bloom-500 font-medium mt-2" onClick={onLearn}>
-            Learn what's coming →
+          <p style={{ fontSize: 13, color: 'var(--bloom-text)', opacity: 0.8, margin: 0 }}>
+            {transition.message}
+          </p>
+          <button
+            onClick={onLearn}
+            style={{
+              fontSize: 13,
+              fontFamily: 'var(--font-body)',
+              background: 'none',
+              border: 'none',
+              color: 'var(--bloom-glow)',
+              fontWeight: 500,
+              cursor: 'pointer',
+              padding: 0,
+              marginTop: 8,
+            }}
+          >
+            Learn what's coming &rarr;
           </button>
         </div>
         <button
           type="button"
           aria-label="Dismiss transition insight"
-          className="text-warm-400 text-lg leading-none"
           onClick={dismiss}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--bloom-muted)',
+            fontSize: 18,
+            lineHeight: 1,
+            cursor: 'pointer',
+            padding: 0,
+          }}
         >
-          ×
+          &times;
         </button>
       </div>
     </div>
   );
 }
 
+const GLOW_MAP: Record<string, string> = {
+  'var(--bloom-teal)': 'rgba(6,214,160,0.06)',
+  'var(--bloom-amber)': 'rgba(251,191,36,0.06)',
+  'var(--bloom-rose)': 'rgba(232,121,160,0.06)',
+  'var(--bloom-glow)': 'rgba(124,58,237,0.06)',
+};
+
 export default function Dashboard() {
   const { currentUser, symptomLogs, patterns, setCurrentView, markPatternRead } = useBloomStore();
   const lifeStageInfo = currentUser ? getLifeStageInfo(currentUser.lifeStage) : null;
 
-  // Compute chart data
   const last30Days = useMemo(() => {
     const cutoff = format(subDays(new Date(), 30), 'yyyy-MM-dd');
     return symptomLogs.filter(l => l.date >= cutoff);
@@ -142,49 +172,84 @@ export default function Dashboard() {
   const todayLog = symptomLogs.find(l => l.date === format(new Date(), 'yyyy-MM-dd'));
   const unreadAlerts = patterns.filter(p => !p.isRead);
 
+  const avgSev = severityOverTime.length > 0
+    ? (severityOverTime.reduce((a, d) => a + d.severity, 0) / severityOverTime.length).toFixed(1)
+    : '0';
+  const avgEnergy = severityOverTime.length > 0
+    ? (severityOverTime.reduce((a, d) => a + d.energy, 0) / severityOverTime.length).toFixed(1)
+    : '0';
+
   const stats = [
-    { label: 'Days Tracked', value: symptomLogs.length, icon: Calendar, color: 'text-bloom-500' },
-    { label: 'Avg Severity', value: severityOverTime.length > 0 ? (severityOverTime.reduce((a, d) => a + d.severity, 0) / severityOverTime.length).toFixed(1) : '0', icon: Activity, color: 'text-rose-400' },
-    { label: 'Patterns Found', value: patterns.length, icon: TrendingUp, color: 'text-amber-500' },
-    { label: 'Avg Energy', value: severityOverTime.length > 0 ? (severityOverTime.reduce((a, d) => a + d.energy, 0) / severityOverTime.length).toFixed(1) : '0', icon: Zap, color: 'text-sage-500' },
+    { label: 'Days Tracked', value: symptomLogs.length, icon: Calendar, accent: 'var(--bloom-teal)' },
+    { label: 'Avg Severity', value: avgSev, icon: Activity, accent: 'var(--bloom-amber)' },
+    { label: 'Patterns Found', value: patterns.length, icon: TrendingUp, accent: 'var(--bloom-rose)' },
+    { label: 'Avg Energy', value: avgEnergy, icon: Zap, accent: 'var(--bloom-glow)' },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      {/* ===== HEADER BAR ===== */}
+      <div
+        className="flex items-center justify-between"
+        style={{
+          background: 'rgba(26,20,48,0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: 16,
+          padding: '16px 20px',
+          borderBottom: '1px solid var(--bloom-border)',
+        }}
+      >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-[var(--font-display)]">
-            Welcome back, <span className="gradient-text">{currentUser?.name?.split(' ')[0]}</span>
-          </h1>
-          <p className="text-warm-400 mt-1">
+          <p style={{ fontSize: 15, color: 'var(--bloom-muted)', margin: 0 }}>Welcome back,</p>
+          <p style={{ fontSize: 28, fontFamily: 'var(--font-heading)', fontStyle: 'italic', color: 'var(--bloom-rose)', margin: 0, lineHeight: 1.15 }}>
+            {currentUser?.name?.split(' ')[0] || 'there'}
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--bloom-muted)', marginTop: 6, opacity: 0.55 }}>
             {lifeStageInfo ? `${lifeStageInfo.stage.charAt(0).toUpperCase() + lifeStageInfo.stage.slice(1)} · ` : ''}
             {format(new Date(), 'EEEE, MMMM d, yyyy')}
           </p>
         </div>
         <button
-          className="btn-bloom flex items-center gap-2"
           onClick={() => setCurrentView('journal')}
+          className="flex items-center gap-2 border-none cursor-pointer"
+          style={{
+            background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))',
+            borderRadius: 12,
+            padding: '10px 20px',
+            color: '#fff',
+            fontSize: 14,
+            fontFamily: 'var(--font-body)',
+            fontWeight: 500,
+          }}
         >
-          <Heart size={16} /> Log Today's Symptoms
+          <Plus size={16} /> Log Today's Symptoms
         </button>
       </div>
 
-      {/* Life-stage adaptive banner */}
+      {/* ===== LIFE STAGE BANNER ===== */}
       {lifeStageInfo && (
-        <div className="glass-card p-4 border-l-4" style={{ borderLeftColor: lifeStageInfo.uiTheme.primary }}>
+        <div
+          style={{
+            background: 'var(--bloom-surface)',
+            borderLeft: '4px solid ' + lifeStageInfo.uiTheme.primary,
+            borderRadius: '0 16px 16px 0',
+            padding: '12px 16px',
+          }}
+        >
           <div className="flex items-start gap-3">
-            <Flower2 size={20} style={{ color: lifeStageInfo.uiTheme.primary }} className="mt-0.5 shrink-0" />
+            <Flower2 size={18} style={{ color: lifeStageInfo.uiTheme.primary, marginTop: 2, flexShrink: 0 }} />
             <div>
-              <p className="font-semibold text-sm" style={{ color: lifeStageInfo.uiTheme.accent }}>
+              <p style={{ fontSize: 13, fontFamily: 'var(--font-heading)', fontWeight: 600, color: lifeStageInfo.uiTheme.accent, margin: 0 }}>
                 {lifeStageInfo.stage.charAt(0).toUpperCase() + lifeStageInfo.stage.slice(1).replace('-', ' ')} Insights
               </p>
-              <p className="text-xs text-warm-500 mt-1">{lifeStageInfo.description}</p>
+              <p style={{ fontSize: 12, color: 'var(--bloom-muted)', margin: '4px 0 0 0' }}>{lifeStageInfo.description}</p>
             </div>
           </div>
         </div>
       )}
 
+      {/* ===== STAGE TRANSITION ===== */}
       {currentUser && (
         <StageTransitionBanner
           age={currentUser.age}
@@ -193,108 +258,178 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Stats Grid */}
+      {/* ===== STATS ROW — Glowing Orb Cards ===== */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map(s => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="glass-card p-4 animate-[slide-up_0.4s_ease-out]">
-              <div className="flex items-center gap-2 mb-2">
-                <Icon size={16} className={s.color} />
-                <span className="text-xs text-warm-400 uppercase tracking-wide">{s.label}</span>
-              </div>
-              <p className="text-2xl font-bold font-[var(--font-display)]">{s.value}</p>
+            <div
+              key={s.label}
+              className="flex flex-col items-center justify-center"
+              style={{
+                minWidth: 130,
+                borderRadius: 20,
+                background: `
+                  radial-gradient(circle at 50% 0%, ${GLOW_MAP[s.accent]} 0%, transparent 70%),
+                  var(--bloom-surface)
+                `,
+                padding: '20px 16px',
+              }}
+            >
+              <Icon size={14} style={{ color: s.accent, marginBottom: 8 }} />
+              <p style={{ fontSize: 36, fontFamily: 'var(--font-heading)', color: s.accent, margin: 0, lineHeight: 1 }}>
+                {s.value}
+              </p>
+              <p style={{ fontSize: 11, fontFamily: 'var(--font-body)', color: 'var(--bloom-muted)', textTransform: 'uppercase', margin: '6px 0 0 0', letterSpacing: '0.08em' }}>
+                {s.label}
+              </p>
             </div>
           );
         })}
       </div>
 
+      {/* ===== BODY FORECAST ===== */}
       <BodyForecast />
 
-      <BloomLetter />
-
-      {/* Pattern Alerts */}
+      {/* ===== PATTERN ALERTS — Bioluminescent Pods ===== */}
       {unreadAlerts.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <AlertTriangle size={18} className="text-amber-500" /> Pattern Alerts
+          <h2 className="flex items-center gap-2" style={{ fontSize: 18, fontFamily: 'var(--font-heading)', fontWeight: 600, margin: 0 }}>
+            <AlertTriangle size={18} style={{ color: 'var(--bloom-amber)' }} /> Pattern Alerts
           </h2>
           {unreadAlerts.map(alert => (
             <div
               key={alert.id}
-              className={`glass-card p-4 border-l-4 cursor-pointer ${
-                alert.severity === 'high' ? 'border-l-rose-400' :
-                alert.severity === 'medium' ? 'border-l-amber-400' : 'border-l-sage-400'
-              }`}
               onClick={() => markPatternRead(alert.id)}
+              className="cursor-pointer"
+              style={{
+                background: 'var(--bloom-surface)',
+                borderLeft: `4px solid ${alert.severity === 'high' || alert.severity === 'urgent' ? 'var(--bloom-rose)' : alert.severity === 'medium' ? 'var(--bloom-amber)' : 'var(--bloom-teal)'}`,
+                borderRadius: '0 16px 16px 0',
+                padding: '16px 20px',
+              }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm">{alert.title}</h3>
-                  <p className="text-xs text-warm-500 mt-1">{alert.description}</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className="inline-block"
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: 'var(--bloom-glow)',
+                        animation: 'bloom-pulse 3s ease-in-out infinite',
+                      }}
+                    />
+                    <h3 style={{ fontSize: 16, fontFamily: 'var(--font-heading)', fontWeight: 600, margin: 0 }}>
+                      {alert.title}
+                    </h3>
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--bloom-muted)', margin: '6px 0 0 0' }}>{alert.description}</p>
+                  <div className="flex flex-wrap gap-2 mt-3">
                     {alert.conditionsFlagged.map(c => (
-                      <span key={c} className="badge badge-bloom">{c}</span>
+                      <span
+                        key={c}
+                        style={{
+                          padding: '2px 12px',
+                          borderRadius: '50% 2px 50% 2px',
+                          fontSize: 11,
+                          fontFamily: 'var(--font-body)',
+                          background: 'rgba(124,58,237,0.12)',
+                          color: 'var(--bloom-text)',
+                        }}
+                      >
+                        {c}
+                      </span>
                     ))}
-                    <span className="badge badge-amber">
-                      {(alert.confidence * 100).toFixed(0)}% confidence
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        padding: 1,
+                        borderRadius: 999,
+                        background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))',
+                      }}
+                    >
+                      <span
+                        style={{
+                          padding: '2px 10px',
+                          borderRadius: 999,
+                          fontSize: 10,
+                          fontFamily: 'var(--font-body)',
+                          background: 'var(--bloom-surface)',
+                          color: 'var(--bloom-muted)',
+                        }}
+                      >
+                        {(alert.confidence * 100).toFixed(0)}% confidence
+                      </span>
                     </span>
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-bloom-600 mt-3 italic">{alert.recommendation}</p>
+              <p style={{ fontSize: 12, color: 'var(--bloom-teal)', marginTop: 10, fontStyle: 'italic', opacity: 0.8 }}>
+                {alert.recommendation}
+              </p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Charts Row */}
+      {/* ===== BLOOM LETTER ===== */}
+      <BloomLetter />
+
+      {/* ===== CHARTS ROW ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Symptom Severity Over Time */}
-        <div className="glass-card p-5">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Activity size={16} className="text-bloom-500" /> Symptom Trend (30 Days)
+        {/* Severity Over Time */}
+        <div style={{ background: 'var(--bloom-surface)', borderRadius: 16, padding: 20 }}>
+          <h3 className="flex items-center gap-2" style={{ fontSize: 15, fontFamily: 'var(--font-heading)', fontWeight: 600, margin: '0 0 4px 0' }}>
+            <Activity size={15} style={{ color: 'var(--bloom-glow)' }} /> Symptom Trend (30 Days)
           </h3>
-          <p className="text-xs text-warm-400 mb-3">
-            This compares daily average symptom severity with energy. Purple uses a 0-5 symptom scale; green uses a 0-10 energy scale.
+          <p style={{ fontSize: 11, color: 'var(--bloom-muted)', margin: '0 0 12px 0', opacity: 0.7 }}>
+            Daily average symptom severity compared with energy levels.
           </p>
-          <div className="flex flex-wrap gap-3 mb-3 text-xs">
-            <span className="flex items-center gap-1 text-warm-500"><span className="w-3 h-3 rounded-full bg-bloom-400" /> Avg symptom severity</span>
-            <span className="flex items-center gap-1 text-warm-500"><span className="w-3 h-3 rounded-full bg-sage-400" /> Energy level</span>
+          <div className="flex flex-wrap gap-3 mb-3" style={{ fontSize: 11 }}>
+            <span className="flex items-center gap-1" style={{ color: 'var(--bloom-muted)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', display: 'inline-block', background: 'var(--bloom-glow)' }} /> Severity (0-5)
+            </span>
+            <span className="flex items-center gap-1" style={{ color: 'var(--bloom-muted)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', display: 'inline-block', background: 'var(--bloom-teal)' }} /> Energy (0-10)
+            </span>
           </div>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={severityOverTime}>
                 <defs>
-                  <linearGradient id="sevGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#a855f7" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#a855f7" stopOpacity={0} />
+                  <linearGradient id="sevGrad2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--bloom-glow)" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="var(--bloom-glow)" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="energyGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                  <linearGradient id="energyGrad2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--bloom-teal)" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="var(--bloom-teal)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} interval={4} />
-                <YAxis yAxisId="severity" domain={[0, 5]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="energy" orientation="right" domain={[0, 10]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                <CartesianGrid stroke="var(--bloom-border)" strokeOpacity={0.3} strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--bloom-muted)' }} tickLine={false} axisLine={false} interval={4} />
+                <YAxis yAxisId="severity" domain={[0, 5]} tick={{ fontSize: 10, fill: 'var(--bloom-muted)' }} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="energy" orientation="right" domain={[0, 10]} tick={{ fontSize: 10, fill: 'var(--bloom-muted)' }} tickLine={false} axisLine={false} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.1)', fontSize: 12 }}
+                  contentStyle={{ borderRadius: 12, border: '1px solid var(--bloom-border)', background: 'var(--bloom-lift)', color: 'var(--bloom-text)', fontSize: 12 }}
                 />
-                <Area yAxisId="severity" type="monotone" dataKey="severity" stroke="#a855f7" fill="url(#sevGrad)" strokeWidth={2} name="Avg severity (0-5)" />
-                <Area yAxisId="energy" type="monotone" dataKey="energy" stroke="#22c55e" fill="url(#energyGrad)" strokeWidth={2} name="Energy (0-10)" />
+                <Area yAxisId="severity" type="monotone" dataKey="severity" stroke="var(--bloom-glow)" fill="url(#sevGrad2)" strokeWidth={2} name="Avg severity (0-5)" />
+                <Area yAxisId="energy" type="monotone" dataKey="energy" stroke="var(--bloom-teal)" fill="url(#energyGrad2)" strokeWidth={2} name="Energy (0-10)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Symptom Radar */}
-        <div className="glass-card p-5">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp size={16} className="text-rose-400" /> Symptom Categories
+        {/* Radar Chart */}
+        <div style={{ background: 'var(--bloom-surface)', borderRadius: 16, padding: 20 }}>
+          <h3 className="flex items-center gap-2" style={{ fontSize: 15, fontFamily: 'var(--font-heading)', fontWeight: 600, margin: '0 0 4px 0' }}>
+            <TrendingUp size={15} style={{ color: 'var(--bloom-rose)' }} /> Symptom Categories
           </h3>
-          <p className="text-xs text-warm-400 mb-3">
-            This radar groups your logged symptoms by type and shows average severity in each category on a 0-5 scale.
+          <p style={{ fontSize: 11, color: 'var(--bloom-muted)', margin: '0 0 12px 0', opacity: 0.7 }}>
+            Average severity across symptom categories on a 0-5 scale.
           </p>
           <div className="grid grid-cols-2 gap-2 mb-3">
             {radarData
@@ -302,71 +437,84 @@ export default function Dashboard() {
               .sort((a, b) => b.value - a.value)
               .slice(0, 4)
               .map(item => (
-                <div key={item.category} className="rounded-lg bg-warm-50 px-3 py-2">
-                  <p className="text-[11px] text-warm-400">{item.category}</p>
-                  <p className="text-sm font-semibold">{item.value}/5 avg severity</p>
+                <div key={item.category} style={{ background: 'rgba(124,58,237,0.08)', borderRadius: 8, padding: '6px 10px' }}>
+                  <p style={{ fontSize: 10, color: 'var(--bloom-muted)', margin: 0 }}>{item.category}</p>
+                  <p style={{ fontSize: 13, fontFamily: 'var(--font-heading)', color: 'var(--bloom-text)', margin: '2px 0 0 0' }}>{item.value}/5 avg</p>
                 </div>
               ))}
           </div>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>
-                <PolarGrid stroke="#e7e5e4" />
-                <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: '#78716c' }} />
-                <Radar dataKey="value" stroke="#a855f7" fill="#a855f7" fillOpacity={0.2} strokeWidth={2} />
+                <PolarGrid stroke="var(--bloom-border)" strokeOpacity={0.3} />
+                <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: 'var(--bloom-muted)' }} />
+                <Radar dataKey="value" stroke="var(--bloom-glow)" fill="var(--bloom-glow)" fillOpacity={0.15} strokeWidth={2} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Top Symptoms Bar Chart */}
-      <div className="glass-card p-5">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <Heart size={16} className="text-rose-400" /> Top Symptoms (30 Days)
+      {/* ===== TOP SYMPTOMS BAR CHART ===== */}
+      <div style={{ background: 'var(--bloom-surface)', borderRadius: 16, padding: 20 }}>
+        <h3 className="flex items-center gap-2" style={{ fontSize: 15, fontFamily: 'var(--font-heading)', fontWeight: 600, margin: '0 0 4px 0' }}>
+          <Heart size={15} style={{ color: 'var(--bloom-rose)' }} /> Top Symptoms (30 Days)
         </h3>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topSymptoms} layout="vertical">
-              <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={100} />
+              <CartesianGrid stroke="var(--bloom-border)" strokeOpacity={0.3} strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--bloom-muted)' }} axisLine={false} tickLine={false} />
+              <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: 'var(--bloom-muted)' }} axisLine={false} tickLine={false} width={100} />
               <Tooltip
-                contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.1)', fontSize: 12 }}
+                contentStyle={{ borderRadius: 12, border: '1px solid var(--bloom-border)', background: 'var(--bloom-lift)', color: 'var(--bloom-text)', fontSize: 12 }}
               />
-              <Bar dataKey="count" fill="#a855f7" radius={[0, 6, 6, 0]} name="Occurrences" />
+              <Bar dataKey="count" fill="var(--bloom-rose)" radius={[0, 6, 6, 0]} name="Occurrences" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Today's snapshot */}
-      <div className="glass-card p-5">
-        <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <Moon size={16} className="text-bloom-400" /> Today's Snapshot
+      {/* ===== TODAY'S SNAPSHOT ===== */}
+      <div style={{ background: 'var(--bloom-surface)', borderRadius: 16, padding: 20 }}>
+        <h3 className="flex items-center gap-2" style={{ fontSize: 15, fontFamily: 'var(--font-heading)', fontWeight: 600, margin: '0 0 16px 0' }}>
+          <Moon size={15} style={{ color: 'var(--bloom-teal)' }} /> Today's Snapshot
         </h3>
         {todayLog ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-xs text-warm-400">Symptoms</p>
-              <p className="font-semibold">{todayLog.symptoms.length} logged</p>
+              <p style={{ fontSize: 11, color: 'var(--bloom-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Symptoms</p>
+              <p style={{ fontSize: 16, fontFamily: 'var(--font-heading)', color: 'var(--bloom-text)', margin: '4px 0 0 0' }}>{todayLog.symptoms.length} logged</p>
             </div>
             <div>
-              <p className="text-xs text-warm-400">Mood</p>
-              <p className="font-semibold">{todayLog.mood?.primary || 'Not set'}</p>
+              <p style={{ fontSize: 11, color: 'var(--bloom-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Mood</p>
+              <p style={{ fontSize: 16, fontFamily: 'var(--font-heading)', color: 'var(--bloom-text)', margin: '4px 0 0 0' }}>{todayLog.mood?.primary || 'Not set'}</p>
             </div>
             <div>
-              <p className="text-xs text-warm-400">Energy</p>
-              <p className="font-semibold">{todayLog.energy}/10</p>
+              <p style={{ fontSize: 11, color: 'var(--bloom-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Energy</p>
+              <p style={{ fontSize: 16, fontFamily: 'var(--font-heading)', color: 'var(--bloom-text)', margin: '4px 0 0 0' }}>{todayLog.energy}/10</p>
             </div>
             <div>
-              <p className="text-xs text-warm-400">Sleep</p>
-              <p className="font-semibold">{todayLog.sleep?.hours || '—'}h</p>
+              <p style={{ fontSize: 11, color: 'var(--bloom-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Sleep</p>
+              <p style={{ fontSize: 16, fontFamily: 'var(--font-heading)', color: 'var(--bloom-text)', margin: '4px 0 0 0' }}>{todayLog.sleep?.hours || '—'}h</p>
             </div>
           </div>
         ) : (
-          <div className="text-center py-6 text-warm-400">
-            <p className="text-sm">No symptoms logged today.</p>
-            <button className="btn-bloom mt-3 text-sm" onClick={() => setCurrentView('journal')}>
+          <div className="text-center py-6">
+            <p style={{ fontSize: 13, color: 'var(--bloom-muted)', margin: 0 }}>No symptoms logged today.</p>
+            <button
+              onClick={() => setCurrentView('journal')}
+              className="border-none cursor-pointer mt-4"
+              style={{
+                background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))',
+                borderRadius: 10,
+                padding: '8px 18px',
+                color: '#fff',
+                fontSize: 13,
+                fontFamily: 'var(--font-body)',
+                fontWeight: 500,
+              }}
+            >
               Log Now
             </button>
           </div>

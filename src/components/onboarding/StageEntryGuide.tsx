@@ -63,7 +63,7 @@ const stageGuideContent: Record<LifeStage, GuideStep[]> = {
   postpartum: [
     {
       title: 'You are healing into a new rhythm',
-      body: 'Postpartum can be tender, intense, and full of change. Your recovery deserves the same attention as everyone else’s needs.',
+      body: 'Postpartum can be tender, intense, and full of change. Your recovery deserves the same attention as everyone else\'s needs.',
       icon: '🕊️',
     },
     {
@@ -147,28 +147,50 @@ export default function StageEntryGuide() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="glass-card w-full max-w-md p-6 text-center animate-[slide-up_0.4s_ease-out]">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: 'rgba(10,6,18,0.7)', backdropFilter: 'blur(4px)' }}
+    >
+      <div
+        className="w-full max-w-md p-6 text-center animate-[slide-up_0.4s_ease-out]"
+        style={{ background: 'var(--bloom-void)', border: '1px solid var(--bloom-border)', borderRadius: 24 }}
+      >
         <div className="flex justify-center gap-2 mb-6">
           {steps.map((item, index) => (
             <span
               key={item.title}
-              className={`w-2.5 h-2.5 rounded-full ${index === stepIndex ? 'bg-bloom-500' : 'bg-warm-100'}`}
+              className="w-2.5 h-2.5 rounded-full"
+              style={{
+                background: index === stepIndex ? 'var(--bloom-glow)' : 'var(--bloom-border)',
+              }}
             />
           ))}
         </div>
 
         <div className="text-6xl mb-5">{step.icon}</div>
-        <h2 className="font-[var(--font-display)] text-2xl font-bold gradient-text mb-3">
+        <h2
+          className="font-[var(--font-display)] text-2xl font-bold mb-3"
+          style={{ color: 'var(--bloom-glow)' }}
+        >
           {step.title}
         </h2>
-        <p className="text-warm-500 leading-relaxed">{step.body}</p>
+        <p className="leading-relaxed" style={{ color: 'var(--bloom-muted)' }}>{step.body}</p>
 
         <div className="flex items-center justify-between mt-8">
-          <button type="button" className="text-sm text-warm-400" onClick={dismissStageGuide}>
+          <button
+            type="button"
+            className="text-sm"
+            style={{ color: 'var(--bloom-muted)' }}
+            onClick={dismissStageGuide}
+          >
             Skip
           </button>
-          <button type="button" className="btn-bloom" onClick={handleNext}>
+          <button
+            type="button"
+            className="px-5 py-2.5 font-medium"
+            style={{ background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))', color: 'white', borderRadius: 14 }}
+            onClick={handleNext}
+          >
             {isFinalStep ? 'Enter your chapter →' : 'Next →'}
           </button>
         </div>

@@ -1,138 +1,232 @@
-// ============================================================
-// BLOOM — Sidebar Navigation
-// Agent 1 (Full-Stack) + Agent 3 (UI/UX)
-// ============================================================
-
+import { useState } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from '../../lib/authService';
 import {
-  LayoutDashboard, BookHeart, Brain, FileText,
-  Library, Flower2, Settings, LogOut, Menu, X, Bell, MapPin, Scale
+  LayoutDashboard, Road, FileEdit, Sparkles,
+  Stethoscope, Book, CircleHelp, Settings, LogOut, Menu, X
 } from 'lucide-react';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'timeline', label: 'My Journey', icon: MapPin },
-  { id: 'journal', label: 'Symptom Journal', icon: BookHeart },
-  { id: 'ask-bloom', label: 'Ask Bloom', icon: Brain },
-  { id: 'doctor-prep', label: 'Doctor Prep', icon: FileText },
-  { id: 'conditions', label: 'Condition Library', icon: Library },
-  { id: 'normal-vs-not', label: "What's Normal?", icon: Scale },
+  { id: 'timeline', label: 'My Journey', icon: Road },
+  { id: 'journal', label: 'Symptom Journal', icon: FileEdit },
+  { id: 'ask-bloom', label: 'Ask Bloom', icon: Sparkles },
+  { id: 'doctor-prep', label: 'Doctor Prep', icon: Stethoscope },
+  { id: 'conditions', label: 'Condition Library', icon: Book },
+  { id: 'normal-vs-not', label: "What's Normal?", icon: CircleHelp },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Sidebar() {
-  const { currentView, setCurrentView, sidebarOpen, setSidebarOpen, currentUser, logout, patterns, isDemoMode } = useBloomStore();
+  const { currentView, setCurrentView, sidebarOpen, setSidebarOpen, currentUser, logout, isDemoMode } = useBloomStore();
   const navigate = useNavigate();
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     if (!isDemoMode) await signOut();
     logout();
     navigate('/');
   };
-  const unreadAlerts = patterns.filter(p => !p.isRead).length;
+
+  const renderPetal = (item: typeof navItems[0]) => {
+    const isActive = currentView === item.id;
+    const isHovered = hoveredItem === item.id;
+    const Icon = item.icon;
+
+    return (
+      <div key={item.id} className="relative flex items-center justify-center">
+        <button
+          className="relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300"
+          style={{
+            background: isActive
+              ? 'radial-gradient(circle, var(--bloom-glow), transparent 160%)'
+              : isHovered
+                ? 'var(--bloom-lift)'
+                : 'transparent',
+            clipPath: isHovered || isActive
+              ? 'polygon(50% 0%, 85% 15%, 100% 50%, 85% 85%, 50% 100%, 15% 85%, 0% 50%, 15% 15%)'
+              : 'none',
+            transform: isActive ? 'rotate(45deg)' : 'none',
+            transition: 'clip-path 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease',
+            willChange: 'transform',
+          }}
+          onClick={() => { setCurrentView(item.id); setSidebarOpen(false); }}
+          onMouseEnter={() => setHoveredItem(item.id)}
+          onMouseLeave={() => setHoveredItem(null)}
+          aria-label={item.label}
+        >
+          <Icon
+            size={18}
+            style={{
+              color: isActive ? 'white' : isHovered ? 'var(--bloom-glow)' : 'var(--bloom-muted)',
+              transform: isActive ? 'rotate(-45deg)' : 'none',
+              transition: 'color 0.2s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              animation: isActive ? 'bloom-pulse 3s ease-in-out' : 'none',
+            }}
+          />
+        </button>
+
+        {isActive && (
+          <>
+            <span
+              className="absolute -bottom-3 w-[2px] h-3"
+              style={{
+                background: 'var(--bloom-glow)',
+                opacity: 0.6,
+                animation: 'stem-grow 0.4s ease forwards',
+              }}
+            />
+          </>
+        )}
+
+        {isHovered && (
+          <div
+            className="absolute left-full ml-3 z-50 pointer-events-none"
+            style={{
+              animation: 'bloom-fade-up 0.2s ease forwards',
+            }}
+          >
+            <div
+              className="whitespace-nowrap px-3 py-1.5 text-[13px] rounded-full"
+              style={{
+                background: 'var(--bloom-surface)',
+                border: '1px solid var(--bloom-border)',
+                color: 'var(--bloom-text)',
+                fontFamily: 'var(--font-body)',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              {item.label}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const initials = currentUser?.name
+    ? currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'BL';
 
   return (
     <>
-      {/* Mobile hamburger */}
       <button
-        type="button"
-        aria-label={sidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
-        aria-expanded={sidebarOpen}
-        className="mobile-nav fixed top-4 left-4 z-50 p-2 rounded-xl bg-white/80 backdrop-blur shadow-lg"
+        className="mobile-nav-bar fixed top-4 left-4 z-50 p-2 rounded-xl"
+        style={{
+          background: 'var(--bloom-surface)',
+          border: '1px solid var(--bloom-border)',
+          color: 'var(--bloom-text)',
+        }}
         onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
       >
         {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Overlay */}
       {sidebarOpen && (
         <div
-          className="mobile-nav fixed inset-0 bg-black/20 z-30 backdrop-blur-sm"
+          className="mobile-nav-bar fixed inset-0 z-30"
+          style={{ background: 'rgba(10, 6, 18, 0.6)', backdropFilter: 'blur(4px)' }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Desktop sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white/80 backdrop-blur-xl border-r border-white/60 z-40 flex flex-col transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0`}
-        style={{ boxShadow: '4px 0 24px -4px rgba(168,85,247,0.08)' }}
+        className="sidebar-desktop fixed top-0 left-0 h-full z-40 flex flex-col items-center py-4"
+        style={{
+          width: '72px',
+          background: 'var(--bloom-deep)',
+          borderRight: '1px solid var(--bloom-border)',
+        }}
       >
-        {/* Logo */}
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-bloom-400 to-rose-400 flex items-center justify-center shadow-bloom">
-            <Flower2 size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold font-[var(--font-display)] gradient-text">BLOOM</h1>
-            <p className="text-[10px] text-warm-400 tracking-wider uppercase">Health Companion</p>
-          </div>
-        </div>
+        <div
+          className="absolute inset-x-0 top-0 h-10"
+          style={{ background: 'linear-gradient(to bottom, var(--bloom-deep), transparent)' }}
+          pointer-events="none"
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-10"
+          style={{ background: 'linear-gradient(to top, var(--bloom-deep), transparent)' }}
+          pointer-events="none"
+        />
 
-        {/* User card */}
-        {currentUser && (
-          <div className="mx-4 mb-4 p-3 rounded-xl bg-bloom-50/80 border border-bloom-100 space-y-3">
-            <div>
-              <p className="font-semibold text-sm text-warm-800">{currentUser.name}</p>
-              <p className="text-xs text-warm-400 capitalize">
-                {currentUser.lifeStage ? currentUser.lifeStage.replace('-', ' ') : 'Member'}
-                {currentUser.age ? ` · Age ${currentUser.age}` : ''}
-              </p>
-            </div>
-            {isDemoMode && (
-              <button
-                type="button"
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-white/80 px-3 py-2 text-xs font-medium text-bloom-600 hover:bg-white"
-                onClick={handleSignOut}
-              >
-                <LogOut size={14} />
-                Back to demo login
-              </button>
-            )}
-          </div>
-        )}
+        <button
+          className="w-10 h-10 rounded-full flex items-center justify-center mb-6 transition-all duration-300 hover:shadow-lg"
+          style={{
+            background: 'radial-gradient(circle, var(--bloom-glow), transparent 160%)',
+            boxShadow: '0 0 0 0 transparent',
+            transition: 'box-shadow 0.3s ease',
+          }}
+          onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.4)'}
+          onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 transparent'}
+          onClick={() => navigate('/')}
+          aria-label="Home"
+        >
+          <span style={{ fontSize: '20px', fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'white' }}>B</span>
+        </button>
 
-        {/* Nav */}
-        <nav className="flex-1 min-h-0 overflow-y-auto px-3 space-y-1 pb-3">
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-            return (
-              <button
-                key={item.id}
-                className={`nav-item w-full ${isActive ? 'active' : ''}`}
-                onClick={() => { setCurrentView(item.id); setSidebarOpen(false); }}
-              >
-                <Icon size={18} />
-                <span>{item.label}</span>
-                {item.id === 'dashboard' && unreadAlerts > 0 && (
-                  <span className="ml-auto flex items-center gap-1 badge badge-rose text-[10px]">
-                    <Bell size={10} />
-                    {unreadAlerts}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <nav className="flex-1 flex flex-col items-center gap-5">
+          {navItems.map(renderPetal)}
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-warm-100">
-          <button
-            className="nav-item w-full text-warm-400 hover:text-rose-500"
+        <div className="relative mt-auto">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer transition-all duration-300"
+            style={{
+              background: 'linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose))',
+              border: '2px solid var(--bloom-border)',
+              color: 'white',
+            }}
             onClick={handleSignOut}
+            title="Sign Out"
           >
-            <LogOut size={18} />
-            <span>Sign Out</span>
-          </button>
-          <p className="text-[10px] text-warm-300 text-center mt-2">
-            BLOOM v1.0 · {isDemoMode ? 'Demo Mode' : 'Live Mode'}
-          </p>
+            <LogOut size={14} />
+          </div>
+          <span
+            className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+            style={{ background: 'var(--bloom-teal)', borderColor: 'var(--bloom-deep)' }}
+          />
         </div>
       </aside>
+
+      {/* Mobile bottom nav */}
+      <nav
+        className="mobile-nav-bar fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 py-2"
+        style={{
+          background: 'var(--bloom-deep)',
+          borderTop: '1px solid var(--bloom-border)',
+        }}
+      >
+        {navItems.slice(0, 5).map(item => {
+          const isActive = currentView === item.id;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              className="flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300"
+              style={{
+                background: isActive
+                  ? 'radial-gradient(circle, var(--bloom-glow), transparent 160%)'
+                  : 'transparent',
+                transform: isActive ? 'rotate(45deg)' : 'none',
+                transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease',
+              }}
+              onClick={() => setCurrentView(item.id)}
+              aria-label={item.label}
+            >
+              <Icon
+                size={18}
+                style={{
+                  color: isActive ? 'white' : 'var(--bloom-muted)',
+                  transform: isActive ? 'rotate(-45deg)' : 'none',
+                }}
+              />
+            </button>
+          );
+        })}
+      </nav>
     </>
   );
 }
