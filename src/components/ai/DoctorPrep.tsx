@@ -4,9 +4,9 @@
 // ============================================================
 
 import { useBloomStore } from '../../store/useBloomStore';
-import { FileText, Download, Calendar, TrendingUp, MessageCircle, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Download, Calendar, TrendingUp, MessageCircle, Clock, AlertCircle, ShieldCheck, Clipboard } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
@@ -14,30 +14,204 @@ const addDays = (date: Date, days: number) => {
   return next;
 };
 
+const durationPatterns = [
+  { pattern: /\bfor\s+(?:the\s+past\s+)?(\d+)\s*(day|days|week|weeks|month|months)\b/i, unitIndex: 2 },
+  { pattern: /\b(\d+)\s*(day|days|week|weeks|month|months)\s+(?:straight|consecutive|in a row)\b/i, unitIndex: 2 },
+];
+
+const painLocationMap: Record<string, string> = {
+  stomach: 'abdominal',
+  belly: 'abdominal',
+  tummy: 'abdominal',
+  pelvis: 'pelvic',
+  pelvic: 'pelvic',
+  cramps: 'pelvic cramping',
+  cramping: 'cramping',
+  back: 'back',
+  head: 'headache',
+  migraine: 'migraine',
+  breast: 'breast',
+  chest: 'chest',
+};
+
+const symptomTerms: Record<string, string> = {
+  dizzy: 'dizziness',
+  faint: 'presyncope or faintness',
+  bloated: 'abdominal bloating',
+  nausea: 'nausea',
+  nauseous: 'nausea',
+  tired: 'fatigue',
+  exhausted: 'fatigue',
+  bleeding: 'bleeding',
+  spotting: 'spotting',
+  discharge: 'vaginal discharge',
+  fever: 'fever',
+  vomit: 'vomiting',
+  vomiting: 'vomiting',
+};
+
+const medicationPatterns = [
+  /\b(ibuprofen|advil|motrin|tylenol|acetaminophen|paracetamol|naproxen|aleve|midol|aspirin)\b/i,
+  /\b(\d+\s?mg)\s+(ibuprofen|advil|motrin|tylenol|acetaminophen|paracetamol|naproxen|aleve|midol|aspirin)\b/i,
+  /\b(ibuprofen|advil|motrin|tylenol|acetaminophen|paracetamol|naproxen|aleve|midol|aspirin)\s+(\d+\s?mg)\b/i,
+];
+
+const estimateSeverity = (text: string) => {
+  const numeric = text.match(/\b(10|[1-9])\s*\/\s*10\b/);
+  if (numeric) return `${numeric[1]}/10`;
+  if (/\b(unbearable|worst|can't stand|cannot stand|excruciating)\b/i.test(text)) return '9/10';
+  if (/\b(so bad|severe|intense|really bad)\b/i.test(text)) return '8/10';
+  if (/\b(moderate|pretty bad)\b/i.test(text)) return '5-6/10';
+  if (/\b(mild|slight|little)\b/i.test(text)) return '2-3/10';
+  return 'not quantified';
+};
+
+const extractDuration = (text: string) => {
+  for (const { pattern, unitIndex } of durationPatterns) {
+    const match = text.match(pattern);
+    if (match) return `${match[1]} ${match[unitIndex]}`;
+  }
+  if (/\ball week\b/i.test(text)) return 'approximately 1 week';
+  if (/\btoday\b/i.test(text)) return 'less than 24 hours';
+  if (/\byesterday\b/i.test(text)) return 'approximately 1 day';
+  return 'duration not specified';
+};
+
+const extractLocationOrSymptom = (text: string) => {
+  const lower = text.toLowerCase();
+  const location = Object.entries(painLocationMap).find(([key]) => lower.includes(key));
+  if (location) return location[1];
+  const symptom = Object.entries(symptomTerms).find(([key]) => lower.includes(key));
+  if (symptom) return symptom[1];
+  if (/\bhurt|pain|ache|aching\b/i.test(text)) return 'pain';
+  return 'symptoms';
+};
+
+const extractMedication = (text: string) => {
+  for (const pattern of medicationPatterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+    const dose = match.find(part => /\d+\s?mg/i.test(part));
+    const medication = match.find(part => /ibuprofen|advil|motrin|tylenol|acetaminophen|paracetamol|naproxen|aleve|midol|aspirin/i.test(part));
+    if (medication && dose) return `${dose.replace(/\s+/g, '')} ${medication}`;
+    if (medication) return medication;
+  }
+  return '';
+};
+
+const buildClinicalTranslation = (input: string) => {
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+
+  const severity = estimateSeverity(trimmed);
+  const duration = extractDuration(trimmed);
+  const symptom = extractLocationOrSymptom(trimmed);
+  const medication = extractMedication(trimmed);
+  const unresponsive = /\b(doesn't do anything|does not do anything|not helping|no relief|unresponsive|doesn't help|does not help)\b/i.test(trimmed);
+  const persistent = duration !== 'duration not specified' ? 'persistent ' : '';
+  const acute = /\b(sudden|started|new|acute)\b/i.test(trimmed) || duration !== 'duration not specified' ? 'acute, ' : '';
+  const painPhrase = symptom.includes('pain') || symptom.includes('cramping') || /\bhurt|pain|ache|aching|cramp/i.test(trimmed)
+    ? `${acute}${persistent}${symptom.includes('pain') || symptom.includes('cramping') ? symptom : `${symptom} pain`}`
+    : `${persistent}${symptom}`;
+
+  const parts = [
+    `Patient reports ${painPhrase}`,
+    duration !== 'duration not specified' ? `for ${duration}` : '',
+    severity !== 'not quantified' ? `with reported severity of ${severity} on the numeric pain scale` : 'with severity not yet quantified',
+  ].filter(Boolean);
+
+  let sentence = `${parts.join(', ')}.`;
+  if (medication) {
+    sentence += ` Symptoms are ${unresponsive ? 'unresponsive' : 'partially characterized in relation'} to ${medication}.`;
+  } else {
+    sentence += ' Medication response not specified.';
+  }
+  sentence += ' Recommend documenting associated symptoms, triggers, menstrual/cycle timing, and functional impact.';
+  return sentence;
+};
+
 export default function DoctorPrep() {
   const { doctorPrep, currentUser, symptomLogs, refreshDoctorPrep } = useBloomStore();
+  const [plainLanguage, setPlainLanguage] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     refreshDoctorPrep();
   }, [refreshDoctorPrep]);
 
+  const latestSymptomNote = useMemo(() => (
+    symptomLogs.find(log => log.notes.trim().length > 0)?.notes ?? ''
+  ), [symptomLogs]);
+
+  const clinicalTranslation = useMemo(
+    () => buildClinicalTranslation(plainLanguage || latestSymptomNote),
+    [plainLanguage, latestSymptomNote]
+  );
+
   const handlePrint = () => {
     window.print();
   };
+
+  const handleCopyTranslation = async () => {
+    if (!clinicalTranslation) return;
+    await navigator.clipboard.writeText(clinicalTranslation);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
+
+  const clinicalTranslatorPanel = (
+    <div className="glass-card p-5 space-y-4 border-l-4 border-l-bloom-400">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-semibold flex items-center gap-2">
+            <ShieldCheck size={18} className="text-bloom-500" /> Medical Gaslighting Shield
+          </h2>
+          <p className="text-sm text-warm-400 mt-1">
+            Translate everyday symptom language into objective wording for your clinician.
+          </p>
+        </div>
+        <button
+          className="btn-bloom flex items-center gap-2 text-sm"
+          onClick={handleCopyTranslation}
+          disabled={!clinicalTranslation}
+        >
+          <Clipboard size={14} /> {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      <textarea
+        className="bloom-input min-h-24 resize-none"
+        value={plainLanguage}
+        onChange={(event) => setPlainLanguage(event.target.value)}
+        placeholder={latestSymptomNote || 'Example: My stomach has been hurting so bad for a week and ibuprofen does not help.'}
+      />
+      <div className="rounded-xl bg-warm-50 border border-warm-100 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-warm-400 mb-2">Doctor-ready phrasing</p>
+        <p className="text-sm text-warm-700 leading-relaxed">
+          {clinicalTranslation || 'Enter a symptom description to generate clinical phrasing.'}
+        </p>
+      </div>
+      <p className="text-xs text-warm-400">
+        This does not diagnose you; it helps describe your experience clearly with duration, severity, medication response, and functional impact.
+      </p>
+    </div>
+  );
 
   if (!doctorPrep) {
     const remainingLogs = Math.max(21 - symptomLogs.length, 0);
 
     return (
-      <div className="text-center py-20">
-        <FileText size={48} className="text-warm-200 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Report Available</h2>
-        <p className="text-warm-400 text-sm">Log at least 3 weeks of symptoms to generate your report.</p>
-        {remainingLogs > 0 && (
-          <p className="text-xs text-warm-400 mt-2">
-            {symptomLogs.length}/21 symptom logs recorded. {remainingLogs} more to go.
-          </p>
-        )}
+      <div className="space-y-6 max-w-4xl">
+        {clinicalTranslatorPanel}
+        <div className="text-center py-16">
+          <FileText size={48} className="text-warm-200 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No Report Available</h2>
+          <p className="text-warm-400 text-sm">Log at least 3 weeks of symptoms to generate your report.</p>
+          {remainingLogs > 0 && (
+            <p className="text-xs text-warm-400 mt-2">
+              {symptomLogs.length}/21 symptom logs recorded. {remainingLogs} more to go.
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -64,6 +238,8 @@ export default function DoctorPrep() {
           <Download size={16} /> Print / Save PDF
         </button>
       </div>
+
+      {clinicalTranslatorPanel}
 
       {/* Report Card */}
       <div className="glass-card p-6 space-y-6">
