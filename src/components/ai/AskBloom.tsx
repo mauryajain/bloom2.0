@@ -5,17 +5,21 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
 import { askBloomAI, checkEmergencySymptoms } from '../../utils/aiEngine';
-import { Send, Sparkles, AlertTriangle, ShieldCheck, Wifi, WifiOff, Activity, Zap, TrendingUp } from 'lucide-react';
+import { Send, Sparkles, AlertTriangle, ShieldCheck, Wifi, WifiOff, Activity, Zap, TrendingUp, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import BloomAvatar from './BloomAvatar';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useVoiceJournal } from '../../hooks/useVoiceJournal';
 
 export default function AskBloom() {
   const { conversations, symptomLogs, addConversationMessage, isDemoMode, userProfile, currentUser } = useBloomStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
+  const { voiceState, transcript, startListening, stopListening, isSupported, resetVoice } = useVoiceJournal();
+
   // Find the conversation for the currently logged-in user
   const conv = conversations.find(c => c.userId === currentUser?.id) || conversations[0];
   const chatIsEmpty = !conv || conv.messages.length === 0;
@@ -91,26 +95,61 @@ export default function AskBloom() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conv?.messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || !conv) return;
-    const userInput = input.trim();
+  useEffect(() => {
+    if (voiceState === 'listening') {
+      setInput(transcript);
+    } else if (voiceState === 'processing' && transcript.trim()) {
+      setInput(transcript);
+      handleSend(transcript);
+      resetVoice();
+    }
+  }, [transcript, voiceState]);
+
+  const speak = (text: string) => {
+    if (!isVoiceMode) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.replace(/[*_#]/g, ''));
+    
+    // Try to find a female voice
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(v => 
+      v.name.includes('Female') || 
+      v.name.includes('Samantha') || 
+      v.name.includes('Victoria') || 
+      v.name.includes('Karen') || 
+      v.name.includes('Google UK English Female') ||
+      v.name.includes('Microsoft Zira') ||
+      v.name.includes('Microsoft Hazel')
+    );
+    
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+    }
+    
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleSend = async (overrideInput?: string | React.MouseEvent) => {
+    const textToSend = typeof overrideInput === 'string' ? overrideInput.trim() : input.trim();
+    if (!textToSend || !conv) return;
 
     // Emergency check (client-side fast path)
-    const emergency = checkEmergencySymptoms([userInput]);
+    const emergency = checkEmergencySymptoms([textToSend]);
     if (emergency) {
       addConversationMessage(conv.id, {
-        id: `user-${Date.now()}`, role: 'user', content: userInput, timestamp: new Date().toISOString(),
+        id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toISOString(),
       });
       addConversationMessage(conv.id, {
         id: `emg-${Date.now()}`, role: 'assistant', content: emergency.message,
         timestamp: new Date().toISOString(), isEmergency: true,
       });
       setInput('');
+      if (isVoiceMode) speak(emergency.message);
       return;
     }
 
     addConversationMessage(conv.id, {
-      id: `user-${Date.now()}`, role: 'user', content: userInput, timestamp: new Date().toISOString(),
+      id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toISOString(),
     });
     setInput('');
     setIsTyping(true);
@@ -122,11 +161,12 @@ export default function AskBloom() {
       if (isDemoMode) {
         await new Promise(r => setTimeout(r, 1200));
         const { generateBloomResponse } = await import('../../utils/aiEngine');
-        response = generateBloomResponse(userInput, symptomLogs);
+        response = generateBloomResponse(textToSend, symptomLogs);
       } else {
-        response = await askBloomAI(userInput, userProfile);
+        response = await askBloomAI(textToSend, userProfile);
       }
       addConversationMessage(conv.id, response);
+      if (isVoiceMode) speak(response.content);
     } catch (err) {
       setAiError('Bloom is temporarily unavailable. Please try again in a moment.');
       console.error('[AskBloom]', err);
@@ -160,13 +200,25 @@ export default function AskBloom() {
     <div className="space-y-4 flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
       <div className="flex items-center gap-3">
         <BloomAvatar size="lg" isTyping={isTyping} />
-        <div>
-          <h1 className="text-2xl font-bold font-[var(--font-display)]">
-            Ask Bloom
-          </h1>
-          <p className="text-warm-400 text-sm mt-1">
-            AI-powered health insights {userProfile ? `personalised for ${userProfile.nickname}` : 'based on your data'}
-          </p>
+        <div className="flex-1 flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold font-[var(--font-display)]">
+              Ask Bloom
+            </h1>
+            <p className="text-warm-400 text-sm mt-1">
+              AI-powered health insights {userProfile ? `personalised for ${userProfile.nickname}` : 'based on your data'}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setIsVoiceMode(!isVoiceMode);
+              if (isVoiceMode) window.speechSynthesis.cancel();
+            }}
+            className={`p-2 rounded-full transition-colors mt-1 ${isVoiceMode ? 'bg-bloom-100 text-bloom-600' : 'bg-warm-100 text-warm-400 hover:bg-warm-200'}`}
+            title={isVoiceMode ? "Mute voice responses" : "Enable voice responses"}
+          >
+            {isVoiceMode ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
         </div>
       </div>
 
@@ -312,14 +364,27 @@ export default function AskBloom() {
       )}
 
       <div className="flex gap-3">
+        {isSupported && (
+          <button 
+            className={`p-3 rounded-2xl flex items-center justify-center transition-colors ${
+              voiceState === 'listening' 
+                ? 'bg-rose-100 text-rose-600 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.3)]' 
+                : 'bg-warm-100 text-warm-600 hover:bg-warm-200'
+            }`}
+            onClick={voiceState === 'listening' ? stopListening : startListening}
+            title={voiceState === 'listening' ? "Stop listening" : "Start voice input"}
+          >
+            {voiceState === 'listening' ? <MicOff size={20} /> : <Mic size={20} />}
+          </button>
+        )}
         <input
           className="bloom-input flex-1"
-          placeholder="Ask Bloom anything about your health patterns..."
+          placeholder={voiceState === 'listening' ? "Listening..." : "Ask Bloom anything about your health patterns..."}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
         />
-        <button className="btn-bloom px-4" onClick={handleSend} disabled={!input.trim() || isTyping}>
+        <button className="btn-bloom px-4" onClick={() => handleSend()} disabled={!input.trim() || isTyping}>
           <Send size={18} />
         </button>
       </div>
