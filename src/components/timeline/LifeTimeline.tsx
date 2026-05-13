@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Heart, ShieldCheck, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Heart, ShieldCheck, Sparkles } from 'lucide-react';
 import { lifeStages } from '../../data/lifeStages';
 import { useBloomStore } from '../../store/useBloomStore';
 import type { LifeStageInfo } from '../../types';
@@ -22,76 +22,86 @@ const markerPositions = [
   { x: 660, y: 130 },
 ];
 
-function StageDetails({ stage, currentIndex }: { stage: LifeStageInfo; currentIndex: number }) {
+function StageDetails({
+  stage,
+  currentIndex,
+}: {
+  stage: LifeStageInfo;
+  currentIndex: number;
+}) {
   const selectedIndex = lifeStages.findIndex(item => item.stage === stage.stage);
   const isFuture = selectedIndex > currentIndex;
+  const bodyChanges = stage.commonExperiences.slice(0, 3);
+  const bodySignals = stage.bodySignals.slice(0, 2);
+  const careNotes = stage.intimacyAndRelationships.slice(0, 2);
+
+  const detailGroups = [
+    { title: 'Body Changes', icon: Sparkles, color: stage.uiTheme.primary, items: bodyChanges },
+    { title: 'Desire & Connection', icon: Heart, color: stage.uiTheme.secondary, items: bodySignals },
+    { title: 'Care Notes', icon: ShieldCheck, color: stage.uiTheme.accent, items: careNotes },
+  ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--bloom-muted)' }}>Life stage</p>
-        <h2 className="text-2xl font-bold font-[var(--font-display)] mt-1" style={{ color: stage.uiTheme.primary }}>
+    <aside
+      className="rounded-3xl p-5 md:p-6"
+      style={{
+        background: 'var(--bloom-surface)',
+        border: '1px solid var(--bloom-border)',
+        boxShadow: `0 0 24px ${stage.uiTheme.primary}1f`,
+      }}
+    >
+      <div className="mb-4">
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--bloom-muted)' }}>
+          Selected stage
+        </p>
+        <h2 className="mt-1 text-2xl font-bold font-[var(--font-display)]" style={{ color: stage.uiTheme.primary }}>
           {stageLabel(stage.stage)}
         </h2>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--bloom-muted)' }}>{stage.ageRange}</p>
+        <p className="mt-0.5 text-sm" style={{ color: 'var(--bloom-muted)' }}>{stage.ageRange}</p>
       </div>
 
-      <p className="leading-relaxed" style={{ color: 'var(--bloom-foreground)' }}>{stage.description}</p>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--bloom-foreground)' }}>
+        {stage.description}
+      </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="rounded-2xl p-5" style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)' }}>
-          <div className="flex items-center gap-3 mb-4">
-            <Sparkles size={40} style={{ color: stage.uiTheme.primary }} />
-            <h3 className="font-[var(--font-display)] text-[17px] font-semibold" style={{ color: 'var(--bloom-foreground)' }}>Body Changes</h3>
-          </div>
-          <ul className="space-y-3">
-            {stage.commonExperiences.map(item => (
-              <li key={item} className="text-sm leading-relaxed pl-5 relative" style={{ color: 'var(--bloom-muted)' }}>
-                <span className="absolute left-0 top-[5px] w-3 h-3" style={{ background: stage.uiTheme.primary, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }} />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="rounded-2xl p-5" style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)' }}>
-          <div className="flex items-center gap-3 mb-4">
-            <Heart size={40} style={{ color: stage.uiTheme.secondary }} />
-            <h3 className="font-[var(--font-display)] text-[17px] font-semibold" style={{ color: 'var(--bloom-foreground)' }}>Desire & Connection</h3>
-          </div>
-          <ul className="space-y-3">
-            {stage.bodySignals.map(item => (
-              <li key={item} className="text-sm leading-relaxed pl-5 relative" style={{ color: 'var(--bloom-muted)' }}>
-                <span className="absolute left-0 top-[5px] w-3 h-3" style={{ background: stage.uiTheme.secondary, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }} />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="rounded-2xl p-5" style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)' }}>
-          <div className="flex items-center gap-3 mb-4">
-            <ShieldCheck size={40} style={{ color: stage.uiTheme.accent }} />
-            <h3 className="font-[var(--font-display)] text-[17px] font-semibold" style={{ color: 'var(--bloom-foreground)' }}>Care Notes</h3>
-          </div>
-          <ul className="space-y-3">
-            {stage.intimacyAndRelationships.map(item => (
-              <li key={item} className="text-sm leading-relaxed pl-5 relative" style={{ color: 'var(--bloom-muted)' }}>
-                <span className="absolute left-0 top-[5px] w-3 h-3" style={{ background: stage.uiTheme.accent, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }} />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="mt-5 space-y-3">
+        {detailGroups.map(group => {
+          const Icon = group.icon;
+          return (
+            <section
+              key={group.title}
+              className="rounded-2xl p-4"
+              style={{ background: 'var(--bloom-background)', border: '1px solid var(--bloom-border)' }}
+            >
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--bloom-foreground)' }}>
+                <Icon size={16} style={{ color: group.color }} />
+                {group.title}
+              </h3>
+              <ul className="space-y-1.5">
+                {group.items.map(item => (
+                  <li key={item} className="relative pl-4 text-xs leading-relaxed" style={{ color: 'var(--bloom-muted)' }}>
+                    <span
+                      className="absolute left-0 top-[6px] h-2 w-2"
+                      style={{ background: group.color, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
       </div>
 
-      <div>
-        <h3 className="font-semibold mb-3" style={{ color: 'var(--bloom-foreground)' }}>Symptoms to watch in this stage</h3>
+      <div className="mt-5">
+        <h3 className="mb-2 text-sm font-semibold" style={{ color: 'var(--bloom-foreground)' }}>
+          Symptoms to watch
+        </h3>
         <div className="flex flex-wrap gap-2">
           {stage.prioritySymptoms.map(symptom => (
             <span
               key={symptom}
-              className="px-3 py-1.5 text-sm rounded-full"
+              className="rounded-full px-2.5 py-1 text-[11px]"
               style={{
                 border: '1px solid transparent',
                 background: 'linear-gradient(var(--bloom-surface), var(--bloom-surface)) padding-box, linear-gradient(135deg, var(--bloom-glow), var(--bloom-rose)) border-box',
@@ -105,11 +115,14 @@ function StageDetails({ stage, currentIndex }: { stage: LifeStageInfo; currentIn
       </div>
 
       {isFuture && (
-        <p className="rounded-2xl p-4 text-sm italic" style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)', color: 'var(--bloom-muted)' }}>
+        <p
+          className="mt-4 rounded-2xl p-3 text-xs italic"
+          style={{ background: 'var(--bloom-background)', border: '1px solid var(--bloom-border)', color: 'var(--bloom-muted)' }}
+        >
           You are not here yet, but knowing what may come next can make future changes less confusing.
         </p>
       )}
-    </div>
+    </aside>
   );
 }
 
@@ -121,7 +134,6 @@ export default function LifeTimeline() {
   );
   const currentStage = lifeStages[currentIndex] ?? lifeStages[1];
   const [selectedStage, setSelectedStage] = useState<LifeStageInfo>(currentStage);
-  const [modalStage, setModalStage] = useState<LifeStageInfo | null>(null);
   const [animatingIndex, setAnimatingIndex] = useState<number | null>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const [pathLength, setPathLength] = useState(0);
@@ -136,19 +148,18 @@ export default function LifeTimeline() {
     const idx = lifeStages.findIndex(s => s.stage === stage.stage);
     setSelectedStage(stage);
     setAnimatingIndex(idx);
-    setTimeout(() => setAnimatingIndex(null), 1500);
-    setModalStage(stage);
+    window.setTimeout(() => setAnimatingIndex(null), 1200);
   };
 
   return (
     <div className="space-y-8">
       <section
-        className="relative overflow-hidden rounded-3xl p-8 md:p-10"
+        className="relative overflow-hidden rounded-3xl p-6 md:p-8"
         style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)' }}
       >
-        <div className="max-w-3xl mb-8">
+        <div className="mb-5 max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--bloom-muted)' }}>My Journey</p>
-          <h1 className="text-3xl md:text-4xl font-bold font-[var(--font-display)] mt-2" style={{ color: 'var(--bloom-foreground)' }}>
+          <h1 className="mt-2 text-3xl font-bold font-[var(--font-display)] md:text-4xl" style={{ color: 'var(--bloom-foreground)' }}>
             Your body is not one fixed story.
           </h1>
           <p className="mt-3 leading-relaxed" style={{ color: 'var(--bloom-muted)' }}>
@@ -156,147 +167,140 @@ export default function LifeTimeline() {
           </p>
         </div>
 
-        <div className="relative w-full overflow-x-auto">
-          <svg className="w-full" viewBox="0 0 760 560" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{ minHeight: '420px' }}>
-            <defs>
-              <linearGradient id="spiralGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="var(--bloom-muted)" />
-                <stop offset="50%" stopColor="var(--bloom-glow)" />
-                <stop offset="100%" stopColor="transparent" />
-              </linearGradient>
-              {lifeStages.map((stage, i) => (
-                <radialGradient key={stage.stage} id={`glow-${i}`} cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor={stage.uiTheme.primary} stopOpacity="0.3" />
-                  <stop offset="100%" stopColor={stage.uiTheme.primary} stopOpacity="0" />
-                </radialGradient>
-              ))}
-            </defs>
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.85fr)]">
+          <div
+            className="relative rounded-3xl p-4"
+            style={{ background: 'var(--bloom-background)', border: '1px solid var(--bloom-border)' }}
+          >
+            <div
+              className="absolute left-5 top-5 z-10 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide"
+              style={{ background: 'var(--bloom-surface)', color: 'var(--bloom-muted)', border: '1px solid var(--bloom-border)' }}
+            >
+              Roadmap
+            </div>
 
-            <path
-              ref={pathRef}
-              d={spiralPath}
-              fill="none"
-              stroke="url(#spiralGradient)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeDasharray={pathLength}
-              strokeDashoffset={
-                animatingIndex !== null
-                  ? pathLength * (1 - (animatingIndex + 1) / lifeStages.length)
-                  : 0
-              }
-              style={{ transition: 'stroke-dashoffset 1.2s ease-in-out' }}
-            />
+            <svg className="h-[520px] w-full" viewBox="0 0 760 560" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <defs>
+                <linearGradient id="spiralGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="var(--bloom-muted)" />
+                  <stop offset="50%" stopColor="var(--bloom-glow)" />
+                  <stop offset="100%" stopColor="transparent" />
+                </linearGradient>
+                {lifeStages.map((stage, i) => (
+                  <radialGradient key={stage.stage} id={`glow-${i}`} cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor={stage.uiTheme.primary} stopOpacity="0.3" />
+                    <stop offset="100%" stopColor={stage.uiTheme.primary} stopOpacity="0" />
+                  </radialGradient>
+                ))}
+              </defs>
 
-            {lifeStages.map((stage, index) => {
-              const marker = markerPositions[index];
-              const isActive = index === currentIndex;
-              const isPast = index < currentIndex;
-              const isSelected = selectedStage.stage === stage.stage;
+              <path
+                ref={pathRef}
+                d={spiralPath}
+                fill="none"
+                stroke="url(#spiralGradient)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeDasharray={pathLength}
+                strokeDashoffset={
+                  animatingIndex !== null
+                    ? pathLength * (1 - (animatingIndex + 1) / lifeStages.length)
+                    : 0
+                }
+                style={{ transition: 'stroke-dashoffset 1.2s ease-in-out' }}
+              />
 
-              const borderColor = isActive
-                ? 'var(--bloom-rose)'
-                : isPast
-                  ? stage.uiTheme.primary
-                  : 'var(--bloom-muted)';
+              {lifeStages.map((stage, index) => {
+                const marker = markerPositions[index];
+                const isActive = index === currentIndex;
+                const isPast = index < currentIndex;
+                const isSelected = selectedStage.stage === stage.stage;
+                const borderColor = isActive
+                  ? 'var(--bloom-rose)'
+                  : isPast || isSelected
+                    ? stage.uiTheme.primary
+                    : 'var(--bloom-muted)';
+                const nodeSize = isActive || isSelected ? 64 : 52;
 
-              const nodeSize = isActive ? 64 : 52;
+                return (
+                  <g key={stage.stage} className="cursor-pointer" onClick={() => openStage(stage)}>
+                    {(isActive || isSelected) && (
+                      <circle
+                        cx={marker.x}
+                        cy={marker.y}
+                        r={48}
+                        fill={`url(#glow-${index})`}
+                        className={isActive ? 'animate-pulse' : undefined}
+                      />
+                    )}
 
-              return (
-                <g key={stage.stage} className="cursor-pointer" onClick={() => openStage(stage)}>
-                  {isActive && (
+                    {isActive && (
+                      <circle
+                        cx={marker.x}
+                        cy={marker.y}
+                        r={36}
+                        fill="none"
+                        stroke="var(--bloom-rose)"
+                        strokeWidth="2"
+                        opacity="0.5"
+                        className="animate-ping"
+                      />
+                    )}
+
                     <circle
                       cx={marker.x}
                       cy={marker.y}
-                      r={48}
-                      fill={`url(#glow-${index})`}
-                      className="animate-pulse"
-                    />
-                  )}
-
-                  {isActive && (
-                    <circle
-                      cx={marker.x}
-                      cy={marker.y}
-                      r={36}
-                      fill="none"
-                      stroke="var(--bloom-rose)"
+                      r={nodeSize / 2}
+                      fill="var(--bloom-surface)"
+                      stroke={borderColor}
                       strokeWidth="2"
-                      opacity="0.5"
-                      className="animate-ping"
+                      style={{
+                        transition: 'all 0.3s ease',
+                        filter: isSelected ? `drop-shadow(0 0 12px ${stage.uiTheme.primary}66)` : undefined,
+                      }}
                     />
-                  )}
 
-                  <circle
-                    cx={marker.x}
-                    cy={marker.y}
-                    r={nodeSize / 2}
-                    fill="var(--bloom-surface)"
-                    stroke={borderColor}
-                    strokeWidth="2"
-                    style={{
-                      transition: 'all 0.3s ease',
-                      filter: isSelected ? `drop-shadow(0 0 12px ${stage.uiTheme.primary}66)` : undefined,
-                    }}
-                  />
-
-                  <text
-                    x={marker.x}
-                    y={marker.y}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    className="text-sm font-bold select-none"
-                    fill={isActive ? 'var(--bloom-rose)' : isPast ? stage.uiTheme.primary : 'var(--bloom-muted)'}
-                  >
-                    {index + 1}
-                  </text>
-
-                  {isActive && (
                     <text
                       x={marker.x}
-                      y={marker.y - 42}
+                      y={marker.y}
                       textAnchor="middle"
-                      className="text-[13px] font-semibold select-none"
-                      fill="var(--bloom-rose)"
+                      dominantBaseline="central"
+                      className="select-none text-sm font-bold"
+                      fill={isActive ? 'var(--bloom-rose)' : isPast || isSelected ? stage.uiTheme.primary : 'var(--bloom-muted)'}
                     >
-                      You are here
+                      {index + 1}
                     </text>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-      </section>
 
-      <section className="rounded-3xl p-6 md:p-8" style={{ background: 'var(--bloom-surface)', border: '1px solid var(--bloom-border)' }}>
-        <StageDetails stage={selectedStage} currentIndex={currentIndex} />
-      </section>
+                    <text
+                      x={marker.x}
+                      y={marker.y + 48}
+                      textAnchor="middle"
+                      className="select-none text-[11px] font-semibold"
+                      fill={isSelected ? stage.uiTheme.primary : 'var(--bloom-muted)'}
+                    >
+                      {stageLabel(stage.stage)}
+                    </text>
 
-      {modalStage && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end" onClick={() => setModalStage(null)}>
-          <div
-            className="w-full max-h-[88vh] overflow-y-auto rounded-t-3xl p-6 md:p-8 animate-[slide-up_0.4s_ease-out]"
-            style={{ background: 'var(--bloom-background)', borderTop: '1px solid var(--bloom-border)' }}
-            onClick={event => event.stopPropagation()}
-          >
-            <div className="max-w-5xl mx-auto">
-              <div className="flex justify-end mb-4">
-                <button
-                  type="button"
-                  aria-label="Close life stage details"
-                  className="p-2 rounded-xl"
-                  style={{ color: 'var(--bloom-muted)' }}
-                  onClick={() => setModalStage(null)}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <StageDetails stage={modalStage} currentIndex={currentIndex} />
-            </div>
+                    {isActive && (
+                      <text
+                        x={marker.x}
+                        y={marker.y - 42}
+                        textAnchor="middle"
+                        className="select-none text-[13px] font-semibold"
+                        fill="var(--bloom-rose)"
+                      >
+                        You are here
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
           </div>
+
+          <StageDetails stage={selectedStage} currentIndex={currentIndex} />
         </div>
-      )}
+      </section>
     </div>
   );
 }
