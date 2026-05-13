@@ -5,8 +5,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useBloomStore } from '../../store/useBloomStore';
 import { askBloomAI, checkEmergencySymptoms } from '../../utils/aiEngine';
-import { ArrowUp, AlertTriangle, Wifi, WifiOff, Activity, TrendingUp } from 'lucide-react';
+import { ArrowUp, AlertTriangle, Wifi, WifiOff, Activity, TrendingUp, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useVoiceJournal } from '../../hooks/useVoiceJournal';
 
 function BloomPetalFlower({ size = 36, isTyping = false }: { size?: number; isTyping?: boolean }) {
   const cx = size / 2;
@@ -55,7 +56,9 @@ export default function AskBloom() {
   const [crackedPod, setCrackedPod] = useState<string | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const [sendHovered, setSendHovered] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { voiceState, transcript, error: voiceError, startListening, stopListening, isSupported, resetVoice } = useVoiceJournal();
 
   const conv = conversations.find(c => c.userId === currentUser?.id) || conversations[0];
   const chatIsEmpty = !conv || conv.messages.length === 0;
@@ -131,9 +134,42 @@ export default function AskBloom() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conv?.messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || !conv) return;
-    const userInput = input.trim();
+  useEffect(() => {
+    if (voiceState === 'listening') {
+      setInput(transcript);
+    } else if (voiceState === 'processing' && transcript.trim()) {
+      void handleSend(transcript);
+      resetVoice();
+    }
+  }, [transcript, voiceState]);
+
+  useEffect(() => {
+    return () => window.speechSynthesis?.cancel();
+  }, []);
+
+  const speak = (text: string) => {
+    if (!isVoiceMode || !('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.replace(/[*_#]/g, ''));
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v =>
+      v.name.includes('Female') ||
+      v.name.includes('Samantha') ||
+      v.name.includes('Victoria') ||
+      v.name.includes('Karen') ||
+      v.name.includes('Google UK English Female') ||
+      v.name.includes('Microsoft Zira') ||
+      v.name.includes('Microsoft Hazel')
+    );
+
+    if (preferredVoice) utterance.voice = preferredVoice;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleSend = async (overrideInput?: string) => {
+    const userInput = (overrideInput ?? input).trim();
+    if (!userInput || !conv) return;
 
     const emergency = checkEmergencySymptoms([userInput]);
     if (emergency) {
@@ -145,6 +181,7 @@ export default function AskBloom() {
         timestamp: new Date().toISOString(), isEmergency: true,
       });
       setInput('');
+      speak(emergency.message);
       return;
     }
 
@@ -165,6 +202,7 @@ export default function AskBloom() {
         response = await askBloomAI(userInput, userProfile);
       }
       addConversationMessage(conv.id, response);
+      speak(response.content);
     } catch (err) {
       setAiError('Bloom is temporarily unavailable. Please try again in a moment.');
       console.error('[AskBloom]', err);
@@ -207,13 +245,35 @@ export default function AskBloom() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <BloomPetalFlower size={48} />
-        <div>
-          <h1 className="text-2xl font-bold font-[var(--font-display)]" style={{ color: 'var(--bloom-text)' }}>
-            Ask Bloom
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--bloom-muted)' }}>
-            AI-powered health insights {userProfile ? `personalised for ${userProfile.nickname}` : 'based on your data'}
-          </p>
+        <div className="flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold font-[var(--font-display)]" style={{ color: 'var(--bloom-text)' }}>
+                Ask Bloom
+              </h1>
+              <p className="text-sm mt-1" style={{ color: 'var(--bloom-muted)' }}>
+                AI-powered health insights {userProfile ? `personalised for ${userProfile.nickname}` : 'based on your data'}
+              </p>
+            </div>
+            <button
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all"
+              style={{
+                backgroundColor: isVoiceMode ? 'var(--bloom-lift)' : 'var(--bloom-surface)',
+                border: `1px solid ${isVoiceMode ? 'var(--bloom-glow)' : 'var(--bloom-border)'}`,
+                color: isVoiceMode ? 'var(--bloom-text)' : 'var(--bloom-muted)',
+              }}
+              onClick={() => {
+                setIsVoiceMode(prev => {
+                  if (prev) window.speechSynthesis?.cancel();
+                  return !prev;
+                });
+              }}
+              title={isVoiceMode ? 'Mute voice responses' : 'Enable voice responses'}
+              aria-label={isVoiceMode ? 'Mute voice responses' : 'Enable voice responses'}
+            >
+              {isVoiceMode ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -507,7 +567,7 @@ export default function AskBloom() {
         <input
           className="flex-1 bg-transparent text-sm outline-none placeholder-[var(--bloom-muted)]"
           style={{ color: 'var(--bloom-text)' }}
-          placeholder="Ask Bloom anything about your health patterns..."
+          placeholder={voiceState === 'listening' ? 'Listening...' : 'Ask Bloom anything about your health patterns...'}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => {
@@ -520,6 +580,25 @@ export default function AskBloom() {
           onBlur={() => setInputFocused(false)}
         />
         <button
+          className="flex items-center justify-center shrink-0 transition-all"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            backgroundColor: voiceState === 'listening' ? 'rgba(232, 121, 160, 0.18)' : 'var(--bloom-lift)',
+            border: `1px solid ${voiceState === 'listening' ? 'var(--bloom-rose)' : 'var(--bloom-border)'}`,
+            color: voiceState === 'listening' ? 'var(--bloom-rose)' : 'var(--bloom-muted)',
+            cursor: isSupported && !isTyping ? 'pointer' : 'not-allowed',
+            opacity: isSupported && !isTyping ? 1 : 0.45,
+          }}
+          onClick={voiceState === 'listening' ? stopListening : startListening}
+          disabled={!isSupported || isTyping}
+          title={isSupported ? (voiceState === 'listening' ? 'Stop listening' : 'Speak to Bloom') : 'Speech recognition is not supported in this browser'}
+          aria-label={voiceState === 'listening' ? 'Stop listening' : 'Speak to Bloom'}
+        >
+          {voiceState === 'listening' ? <MicOff size={18} /> : <Mic size={18} />}
+        </button>
+        <button
           className="flex items-center justify-center shrink-0"
           style={{
             width: 40,
@@ -530,7 +609,7 @@ export default function AskBloom() {
             cursor: input.trim() && !isTyping ? 'pointer' : 'not-allowed',
             opacity: input.trim() && !isTyping ? 1 : 0.4,
           }}
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={!input.trim() || isTyping}
           onMouseEnter={() => setSendHovered(true)}
           onMouseLeave={() => setSendHovered(false)}
@@ -545,6 +624,11 @@ export default function AskBloom() {
           />
         </button>
       </div>
+      {voiceError && (
+        <p className="mt-2 text-xs" style={{ color: 'var(--bloom-rose)' }}>
+          {voiceError}
+        </p>
+      )}
     </div>
   );
 }

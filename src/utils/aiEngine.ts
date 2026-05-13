@@ -48,9 +48,10 @@ export async function askBloomAI(userMessage: string, profile?: UserProfile | nu
     }
 
     if (geminiKey) {
-      const systemInstruction = profile
+      const systemInstruction = (profile
         ? buildSystemPrompt(profile)
-        : 'You are Bloom, a women\'s health AI companion. Never diagnose. Always recommend consulting a healthcare professional.';
+        : 'You are Bloom, a women\'s health AI companion. Never diagnose. Always recommend consulting a healthcare professional.')
+        + '\n\nIMPORTANT: Keep your response very short and concise.';
 
       const genAI = new GoogleGenerativeAI(geminiKey);
       const model = genAI.getGenerativeModel({
