@@ -14,12 +14,20 @@ const toSeverity = (value: unknown): Severity => {
   return severity >= 1 && severity <= 5 ? severity as Severity : 3;
 };
 
+const getAuthRedirectUrl = () => {
+  if (typeof window === 'undefined') return 'https://ambharat314.github.io/bloom2.0/';
+  return `${window.location.origin}${import.meta.env.BASE_URL}`;
+};
+
 export async function signUp(email: string, password: string, name?: string): Promise<{ userId: string; hasSession: boolean } | AuthError> {
   if (!isSupabaseConfigured) return { message: 'Supabase is not configured. See SETUP.md to add your credentials and enable real auth.' };
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: name ? { data: { name } } : undefined,
+    options: {
+      ...(name ? { data: { name } } : {}),
+      emailRedirectTo: getAuthRedirectUrl(),
+    },
   });
   if (error) {
     if (error.message.toLowerCase().includes('email not confirmed')) {
