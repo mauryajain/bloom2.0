@@ -21,7 +21,12 @@ export async function signUp(email: string, password: string, name?: string): Pr
     password,
     options: name ? { data: { name } } : undefined,
   });
-  if (error) return { message: error.message };
+  if (error) {
+    if (error.message.toLowerCase().includes('email not confirmed')) {
+      return { message: 'Please confirm your email first. Check your inbox or spam folder for the Supabase confirmation link, then log in again.' };
+    }
+    return { message: error.message };
+  }
   if (!data.user) return { message: 'Signup failed — no user returned.' };
   return { userId: data.user.id, hasSession: !!data.session };
 }
@@ -29,7 +34,12 @@ export async function signUp(email: string, password: string, name?: string): Pr
 export async function signIn(email: string, password: string): Promise<{ userId: string } | AuthError> {
   if (!isSupabaseConfigured) return { message: 'Supabase is not configured. See SETUP.md to add your credentials and enable real auth.' };
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { message: error.message };
+  if (error) {
+    if (error.message.toLowerCase().includes('email not confirmed')) {
+      return { message: 'Please confirm your email first. Check your inbox or spam folder for the Supabase confirmation link, then log in again.' };
+    }
+    return { message: error.message };
+  }
   if (!data.user) return { message: 'Login failed — no user returned.' };
   return { userId: data.user.id };
 }

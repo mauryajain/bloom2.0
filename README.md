@@ -300,6 +300,9 @@ npm install
 2. Go to **SQL Editor → New query**, paste the contents of `supabase/migrations/001_bloom_schema.sql`, and run it
 3. Run `supabase/migrations/002_onboarding_profile_fields.sql` the same way
 4. Go to **Project Settings → API** and copy your Project URL and anon key
+5. For hackathon/demo testing, go to **Authentication → Sign In / Providers → Email** and either:
+   - keep email confirmation on, then confirm new accounts from the inbox before logging in
+   - turn **Confirm email** off if you want test accounts to log in immediately
 
 ### 3. Configure environment variables
 
