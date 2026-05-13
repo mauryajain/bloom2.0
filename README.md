@@ -73,6 +73,8 @@ A conversational AI assistant built on Gemini 1.5 Flash, system-prompted with th
 
 Real-time symptom trend mini-chart and noticeable patterns are surfaced above the chat input as context. Ask Bloom also supports live voice chat: users can speak questions through the browser microphone and optionally hear spoken AI replies.
 
+If the shared server API key's rate limit is reached, you can provide your own Gemini API key in **Settings → API Keys** — it will be used instead, keeping Ask Bloom and all AI features running without interruption.
+
 ---
 
 ### ☁️ Body Forecast
@@ -135,7 +137,7 @@ At-a-glance health overview with:
 ---
 
 ### ⚙️ Settings
-Manage profile, notification preferences, data sharing, and life-stage-adaptive theme. Sign out cleanly with session clearing.
+Manage profile, notification preferences, data sharing, life-stage-adaptive theme, and **add your own Gemini API key** to power AI features with no rate limits. Sign out cleanly with session clearing. Your key is stored locally in your browser and never sent to our servers.
 
 ---
 
@@ -324,6 +326,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 # Without this, Bloom falls back to the Supabase Edge Function
 VITE_GEMINI_API_KEY=your-gemini-key
 ```
+
+> **Alternatively,** after logging in, go to **Settings → API Keys** to paste your Gemini key directly in the UI. It takes priority over the environment variable and is stored in your browser's localStorage. Useful when the shared server key's rate limit is exhausted.
 
 ### 4. Run the app
 
